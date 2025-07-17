@@ -1,0 +1,14 @@
+# Requisitos para el backend
+fastapi
+uvicorn[standard]
+python-dotenv
+SQLAlchemy
+alembic
+passlib[bcrypt]
+PyJWT
+python-multipart
+transformers
+torch
+librosa
+psycopg2-binary
+pydantic<2

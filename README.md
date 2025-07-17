@@ -1,2 +1,1 @@
-# emotion-elderly-app
-Proyecto final del Programa Laborlan2025
+# Proyecto Emotion Elderly App
