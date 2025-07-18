@@ -1,0 +1,819 @@
+# 01_Fase_1_Definición_arquitectura.md
+
+# 🚀 Fase 1: Definición y Arquitectura
+
+---
+
+## 1. Casos de Uso
+
+### 🔒 Registro y Autenticación
+
+- El usuario elige rol:
+  - 👴 Persona mayor
+  - 👩‍⚕️ Cuidador
+- Flujo:
+  1. Registro con email y contraseña
+  2. Confirmación de email
+  3. Login y obtención de token JWT
+  4. Acceso a rutas protegidas según rol
+
+### 🎤 Subida y Reproducción de Mensajes de Voz
+
+- Funcionalidades:
+  - 📥 Subida de audio (WAV/MP3)
+  - 📂 Almacenamiento y generación de ID
+  - ▶️ Reproducción desde el historial
+
+### 🚨 Detección de Emociones y Alertas
+
+- Proceso:
+  1. El backend invoca el modelo IA al recibir un audio
+  2. Clasificación: tristeza, preocupación, molestia, alegría
+  3. Creación de alerta si se detecta emoción de riesgo
+  4. Notificación al cuidador
+
+---
+
+## 2. Roles y Permisos ⚙️
+
+| Rol              | Icono | Permisos Principales                                |
+| ---------------- | ----- | --------------------------------------------------- |
+| 🛠 Admin          | 🛠     | - Gestionar usuarios (crear, editar, eliminar)      |
+|                  |       | - Revisar todos los informes de emociones           |
+|                  |       | - Ver estadísticas globales                         |
+| 👴 Persona mayor | 👴    | - Subir y gestionar sus propios audios              |
+|                  |       | - Ver historial personal                            |
+|                  |       | - No acceder a datos de otros usuarios              |
+| 👩‍⚕️ Cuidador      | 👩‍⚕️    | - Ver alertas y reportes de los usuarios a su cargo |
+|                  |       | - No puede modificar/eliminar usuarios              |
+
+---
+
+## 3. Arquitectura General 🏗️
+
+### Componentes Principales
+
+- **Frontend**
+
+  - Tecnología: React (JS) o Jinja (Flask/Django)
+  - Módulos:
+    - 🗝 Autenticación (Signup/Login/Logout)
+    - 🎙 Subida y reproducción de audio
+    - 📑 Historial de emociones
+    - 📊 Dashboard de alertas
+
+- **Backend**
+
+  - Framework: FastAPI / Flask / Django
+  - Endpoints REST:
+    - `/auth/*` – Gestión de autenticación
+    - `/audios/*` – Subida, listado y streaming de audios
+    - `/analyze` – Inferencia IA
+    - `/alerts/*` – Listar y gestionar alertas
+
+- **Base de Datos**
+
+  - Motor: SQLite local o PostgreSQL/MySQL en la nube
+  - Tablas:
+    - `users`
+    - `roles`
+    - `audios`
+    - `emotions`
+    - `alerts`
+
+- **Módulo IA**
+  - Modelo: `CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-elderly`
+  - Pipeline:
+    1. 🎛 Preprocesamiento (resampleo, normalización)
+    2. 🤖 Inferencia con HuggingFace
+    3. 🏷 Mapear etiquetas y almacenar resultados
+
+---
+
+### Diagrama de Arquitectura
+
+```plaintext
+        +-----------------------------+
+        |  Frontend (React / Jinja)   |
+        +-------------+---------------+
+                      |
+                      | HTTP/HTTPS
+                      ▼
+        +-------------+---------------+
+        | Backend (FastAPI / Flask /  |
+        |      Django)                |
+        +------+------+---+----------+
+               |      |   |
+               |      |   +--> 🤖 IA (HuggingFace Model)
+               |      |
+               |      +--> 🗄 Base de datos (SQLite / Postgres)
+               |
+               +--> 📁 Almacenamiento de audios
+                     (Local / Cloud Bucket)
+```
+
+
+# 02_Fase_2_Preparación del Entorno.md
+
+````markdown
+# 🚀 Fase 2: Preparación del Entorno
+
+---
+
+## 1. Configuración del Repositorio 🗂️
+
+### 🔧 1.1 Crear repositorio
+
+- Hospeda el proyecto en **GitHub** o **GitLab**.
+
+### 📁 1.2 Estructura de carpetas
+
+```plaintext
+├── backend/
+│   ├── app/
+│   ├── alembic/
+│   └── requirements.txt
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   └── package.json
+├── docs/
+├── tests/
+└── README.md
+```
+````
+
+### 🌿 1.3 Convención de ramas
+
+| Rama         | Propósito            |
+| ------------ | -------------------- |
+| main         | Versión estable      |
+| develop      | Integración continua |
+| feature/auth | Autenticación        |
+| feature/ia   | Módulo IA            |
+| feature/ui   | Interfaz de usuario  |
+
+---
+
+## 2. Entorno Virtual y Dependencias 🐍
+
+### 🎯 2.1 Crear entorno virtual
+
+- Python:
+  ```bash
+  python -m venv .venv
+  source .venv/bin/activate
+  ```
+- Conda:
+  ```bash
+  conda create -n proyecto_ia python=3.x
+  conda activate proyecto_ia
+  ```
+
+### 📝 2.2 Archivos de requerimientos
+
+- **backend/requirements.txt**
+- **frontend/package.json** (si usas React/Node)
+
+### 🔑 2.3 Dependencias clave
+
+- **Backend**
+
+  - Framework: `FastAPI` / `Flask` / `Django`
+  - Autenticación: `PyJWT`, `bcrypt`
+  - Audio: `librosa`, `torchaudio`
+  - IA: `transformers`, `torch`
+
+- **Frontend (React)**
+  - Core: `react`, `react-router-dom`, `axios`
+  - Estilos: `styled-components` o `tailwindcss`
+
+### ⚡ 2.4 Instalación rápida
+
+```bash
+# Instalar dependencias del backend
+pip install -r backend/requirements.txt
+
+# Instalar dependencias del frontend
+cd frontend
+npm install
+```
+
+---
+
+## 3. Base de Datos y Migraciones 🗄️
+
+### 🛠️ 3.1 Elegir motor de base de datos
+
+- **Desarrollo**: SQLite
+- **Producción**: PostgreSQL o MySQL (en la nube)
+
+### 🗂️ 3.2 Modelo de datos inicial
+
+| Tabla    | Campos principales                         |
+| -------- | ------------------------------------------ |
+| users    | id, nombre, email, password_hash, role_id  |
+| roles    | id, nombre                                 |
+| audios   | id, user_id, file_path, timestamp          |
+| emotions | id, audio_id, label, confidence, timestamp |
+| alerts   | id, emotion_id, user_id, status, timestamp |
+
+### 🔄 3.3 Configuración de migraciones
+
+- **FastAPI/Flask**: Alembic
+- **Django**: Migrations integradas
+
+### 🎲 3.4 Primeras migraciones y seed data
+
+```bash
+# Ejemplo Alembic (FastAPI/Flask)
+alembic init alembic
+alembic revision --autogenerate -m "Initial schema"
+alembic upgrade head
+```
+
+---
+
+## 4. Herramientas de Desarrollo y Testing 🧰
+
+### 🖋️ 4.1 Linter y Formateo
+
+- **Python**: `flake8`, `black`
+- **JavaScript**: `ESLint`, `Prettier`
+
+### 🧪 4.2 Testing
+
+- **Backend**:
+  - `pytest` + `requests`
+  - (Django) `TestCase`
+- **Frontend**:
+  - `Jest` + `React Testing Library`
+
+### 💾 4.3 Pre-commit Hooks
+
+- `pre-commit` (formateo automático)
+- `pip-audit`, `npm audit` (escaneo de seguridad)
+
+---
+
+Con todo esto listo, avanzamos a la **Fase 3: Autenticación y Autorización**. 🚀
+
+```
+
+```
+
+
+# 03_Fase_3_Autenticación y Autorización.md
+
+````markdown
+# 🚀 Fase 3: Autenticación y Autorización
+
+---
+
+## 1. Modelado de Usuarios 🧑‍💻
+
+### 👥 Entidad `User`
+
+- **id**: UUID o Integer
+- **nombre**: String
+- **email**: String (único, validación regex)
+- **password_hash**: String (bcrypt)
+- **role_id**: ForeignKey → `roles.id`
+- **created_at** / **updated_at**: Timestamps
+
+### 🔒 Validaciones de Formulario
+
+- Email con formato válido
+- Contraseña:
+  - Mínimo 8 caracteres
+  - Combinación de mayúsculas, minúsculas, números y símbolos
+- Confirmación de contraseña
+- (Opcional) Captcha para prevenir bots
+
+---
+
+## 2. Endpoints de Autenticación 🔐
+
+### 📩 Signup
+
+- **Ruta**: `POST /auth/signup`
+- **Request**: `{ nombre, email, password }`
+- **Acciones**:
+  1. Validar datos y formato.
+  2. Hashear contraseña con bcrypt.
+  3. Crear usuario con rol por defecto (`persona_mayor` o `cuidador`).
+- **Respuesta**:
+  - `201 Created` + `{ userId, message }`
+  - `400 Bad Request` en caso de errores de validación
+
+### 🔑 Login
+
+- **Ruta**: `POST /auth/login`
+- **Request**: `{ email, password }`
+- **Acciones**:
+  1. Verificar existencia de usuario y rol.
+  2. Comparar password con hash.
+  3. Generar JWT (`access_token`, `Bearer`)
+- **Respuesta**:
+  - `200 OK` + `{ access_token, token_type: "Bearer" }`
+  - `401 Unauthorized` si credenciales inválidas
+
+### 🚪 Logout
+
+- **Ruta**: `POST /auth/logout`
+- **Acciones**:
+  - Invalidar token (blacklist) o eliminar sesión en frontend
+- **Respuesta**:
+  - `200 OK` + `{ message: "Logout exitoso" }`
+
+### 🔄 Refresh Token (Opcional)
+
+- **Ruta**: `POST /auth/refresh`
+- **Request**: `{ refresh_token }`
+- **Acciones**:
+  - Validar refresh token
+  - Emitir nuevo `access_token`
+- **Respuesta**:
+  - `200 OK` + `{ access_token }`
+
+---
+
+## 3. Middleware y Control de Acceso 🛡️
+
+### ⚙️ Verificación de JWT
+
+- Leer cabecera `Authorization: Bearer <token>`
+- Validar firma y expiración del JWT
+- Extraer payload (`user_id`, `role`) y adjuntar al request
+
+### 🔑 Filtrado por Roles
+
+- **Roles soportados**: `admin`, `persona_mayor`, `cuidador`
+- **Protección de rutas**:
+  - Solo **admin**: `/admin/*`
+  - **admin** y **cuidador**: `/alerts/*`
+  - Solo **persona_mayor**: `/audios/*`
+  - Público: `/auth/*`, `/public/*`
+
+### 📜 Manejo de Errores
+
+- `401 Unauthorized`: token faltante, inválido o expirado
+- `403 Forbidden`: acceso denegado por rol
+- Formato de respuesta de error:
+  ```json
+  { "detail": "Mensaje de error descriptivo" }
+  ```
+````
+
+---
+
+### 🔄 Diagrama de Flujo: Signup / Login
+
+```plaintext
+[ Cliente ]
+   │            ┌──────────────────┐
+   │ POST /auth/signup ────▶│ Backend crea user │
+   │            └──────────────────┘
+   │ 201 Created / 400 Bad Request
+   │
+   │ POST /auth/login ─────▶┌───────────────────┐
+   │                       │ Backend genera JWT │
+   │                       └───────────────────┘
+   │ 200 OK / 401 Unauthorized
+```
+
+---
+
+Con la Fase 3 completada, ¡pasamos a la **Fase 4: Creación de Endpoints y Lógica de Negocio**! 🚀
+
+```
+
+```
+
+
+# 04_Fase_4_Crear_Endpoints_Lógica_Negocio.md
+
+````markdown
+# 🚀 Fase 4: Creación de Endpoints y Lógica de Negocio
+
+---
+
+## 1. Gestión de Audios 🎙️
+
+### 📥 1.1 Subida de Audios
+
+- **Ruta**: `POST /audios/upload`
+- **Request**:
+  ```json
+  { "file": <audiofile> }
+  ```
+````
+
+- **Acciones**:
+  1. Validar token JWT y permisos (rol `persona_mayor`).
+  2. Comprobar formato y tamaño (WAV/MP3 ≤ 10 MB).
+  3. Guardar el fichero en almacenamiento (local o bucket).
+  4. Crear registro en tabla `audios` con `user_id`, `file_path`, `timestamp`.
+- **Response**:
+  - `201 Created` +
+    ```json
+    { "audio_id": "uuid", "message": "Audio subido con éxito" }
+    ```
+  - `400 Bad Request` / `401 Unauthorized`
+
+### 📂 1.2 Listado de Audios
+
+- **Ruta**: `GET /audios`
+- **Acciones**:
+  1. Validar JWT.
+  2. Consultar `audios` filtrado por `user_id`.
+  3. Devolver array de objetos `{ audio_id, timestamp, emotion_summary }`.
+- **Response**:
+  - `200 OK` +
+    ```json
+    [
+      { "audio_id": "uuid", "timestamp": "...", "emotion": "triste", "confidence": 0.87 },
+      …
+    ]
+    ```
+
+### ▶️ 1.3 Streaming de Audio
+
+- **Ruta**: `GET /audios/{audio_id}/stream`
+- **Acciones**:
+  1. Validar JWT y que el `audio_id` pertenezca al usuario o rol `admin/cuidador`.
+  2. Abrir archivo y responder con `Content-Type: audio/mpeg` o `audio/wav`.
+- **Response**:
+  - `200 OK` con flujo de bytes de audio
+
+---
+
+## 2. Integración IA 🤖
+
+### 🛠 2.1 Preprocesamiento de Audio
+
+1. Convertir muestreo a 16 kHz mono.
+2. Normalizar amplitud.
+3. Extraer features si es necesario (espectrograma).
+
+### ⚙️ 2.2 Endpoint de Análisis
+
+- **Ruta**: `POST /analyze`
+- **Request**:
+  ```json
+  { "audio_id": "uuid" }
+  ```
+- **Acciones**:
+  1. Recuperar path del audio.
+  2. Cargar fichero y aplicar preprocesamiento.
+  3. Ejecutar inferencia con el modelo  
+     `CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-elderly`.
+  4. Obtener etiqueta (`triste`, `preocupado`, `molesto`, `alegre`) y confianza.
+- **Response**:
+  - `200 OK` +
+    ```json
+    {
+      "audio_id": "uuid",
+      "emotion": "preocupado",
+      "confidence": 0.92,
+      "timestamp": "2025-07-17T10:45:00Z"
+    }
+    ```
+
+### 📦 2.3 Almacenamiento de Resultados
+
+- Crear registro en tabla `emotions` con:
+  - `audio_id`, `label`, `confidence`, `timestamp`.
+- Actualizar campo `emotion_summary` en `audios` (opcional).
+
+---
+
+## 3. Alertas y Notificaciones 🚨
+
+### 🔔 3.1 Generación de Alertas
+
+- **Regla**:
+  - Si `label` ∈ {`triste`, `preocupado`, `molesto`} **y** `confidence` ≥ 0.80
+- **Acción**:
+  - Insertar registro en tabla `alerts`:  
+    `{ emotion_id, user_id, status: "pending", timestamp }`
+
+### 📬 3.2 Envío de Notificaciones
+
+- **Canales**:
+  - Email (SMTP)
+  - Push (Firebase / OneSignal)
+- **Contenido**:
+  - **Asunto**: “Alerta de estado emocional”
+  - **Mensaje**:
+    > “Se ha detectado preocupación en el audio de Juan Pérez (17/07/2025 10:45). Por favor, revisa.”
+
+### 👩‍⚕️ 3.3 Panel para Cuidadores/Admin
+
+- **Ruta**: `GET /alerts`
+- **Permisos**: roles `admin`, `cuidador`
+- **Response**:
+  ```json
+  [
+    {
+      "alert_id": "uuid",
+      "user": { "id": "...", "nombre": "Juan Pérez" },
+      "emotion": "preocupado",
+      "confidence": 0.92,
+      "status": "pending",
+      "timestamp": "2025-07-17T10:45:00Z"
+    },
+    …
+  ]
+  ```
+- **Acciones disponibles**:
+  - Marcar como `resolved`
+  - Eliminar alerta
+
+---
+
+### 🔄 Flujo de Datos Simplificado
+
+```plaintext
+[ Usuario sube audio ]
+           │
+           ▼
+  POST /audios/upload
+           │
+           ▼
+[ Almacenamiento de fichero ]
+           │
+           ▼
+  POST /analyze
+           │
+           ▼
+[ Modelo IA infiere emoción ]
+           │
+           ▼
+[ Guardar en emotions + alerts ]
+           │
+           ▼
+[ Notificar a cuidadores/admin ]
+```
+
+---
+
+Con la **Fase 4** lista, seguimos hacia la **Fase 5: Desarrollo del Frontend**! 🚀
+
+```
+
+```
+
+
+# 05_Fase_5_Desarrollo del Frontend.md
+
+# 🚀 Fase 5: Desarrollo del Frontend
+
+---
+
+## 1. Estructura del Proyecto 📂
+
+- **src/**
+  - **pages/**
+    - `HomePage.jsx`
+    - `AuthPage.jsx`
+    - `DashboardPage.jsx`
+    - `AudioHistoryPage.jsx`
+    - `AlertsPage.jsx`
+  - **components/**
+    - `Navbar.jsx`
+    - `Footer.jsx`
+    - `AudioUploadForm.jsx`
+    - `AudioList.jsx`
+    - `EmotionCard.jsx`
+    - `AlertList.jsx`
+    - `PrivateRoute.jsx`
+  - **services/**
+    - `authService.js`
+    - `audioService.js`
+    - `alertService.js`
+  - **styles/**
+    - global styles, theme variables
+  - **utils/**
+    - helpers de formateo de fecha, manejo de tokens
+
+---
+
+## 2. Rutas y Navegación 🔗
+
+1. Configurar `react-router-dom`
+2. Definir rutas públicas y privadas:
+   - `/` → HomePage
+   - `/signup` → AuthPage (signup)
+   - `/login` → AuthPage (login)
+   - `/dashboard` → DashboardPage
+   - `/audios` → AudioHistoryPage
+   - `/alerts` → AlertsPage
+   - `/admin` → AdminPage (solo rol `admin`)
+3. Componente `PrivateRoute` para proteger rutas según rol
+
+---
+
+## 3. Componentes UI 🎨
+
+- **Navbar**
+  - Logo, enlaces a rutas según rol, botón de logout
+- **Footer**
+  - Información de contacto y derechos de autor
+- **AudioUploadForm**
+  - Campo de archivo, drag & drop, vista previa del nombre
+- **AudioList & EmotionCard**
+  - Mostrar lista de audios con fecha, emoción y confianza
+- **AlertList**
+  - Tarjetas de alerta con botón de “Marcar como resuelta”
+- **AuthForm**
+  - Campos de email, contraseña y validaciones en tiempo real
+
+---
+
+## 4. Formularios y Validación 📝
+
+- Usar **React Hook Form** o **Formik**
+- Validaciones:
+  1. Email (regex)
+  2. Contraseña (mínimo 8 caracteres, mayúsculas, números)
+  3. Tamaño y formato de audio (≤10 MB, `.wav`/`.mp3`)
+- Mensajes de error claros y accesibles
+
+---
+
+## 5. Estilos y Responsividad 📱
+
+- Estrategia **mobile-first**
+- Framework de estilos:
+  - **Tailwind CSS** o **styled-components**
+- Layouts con **Flexbox** y **Grid**
+- Media queries para:
+  - Móvil (≤640px)
+  - Tablet (641–1024px)
+  - Desktop (>1024px)
+
+---
+
+## 6. Integración con Backend ⚙️
+
+- Crear instancia de **axios** con baseURL y JWT interceptor
+- **authService**
+  - `signup()`, `login()`, `logout()`, `refreshToken()`
+- **audioService**
+  - `uploadAudio()`, `getAudios()`, `streamAudio()`
+- **alertService**
+  - `getAlerts()`, `resolveAlert()`
+- Manejo de errores y loading states
+
+---
+
+## 7. Testing de Frontend 🧪
+
+- **Unit & Integration Tests** con **Jest** + **React Testing Library**
+  - Componentes: render, eventos y snapshots
+  - Formularios: validaciones y submit
+- **Mocking** de llamadas al backend con **msw** (Mock Service Worker)
+- Cobertura mínima: 80%
+
+---
+
+## 8. Accesibilidad y Experiencia de Usuario ♿
+
+- Etiquetas **ARIA** en formularios y botones
+- Navegación con **teclado** y foco visible
+- Contraste de color WCAG AAA
+- Indicadores de carga y estados vacíos
+- Mensajes de éxito/​error consistentes
+
+---
+
+¡Con la **Fase 5** terminada, avanzamos a la **Fase 6: Seguridad y Tests Automáticos**! 🚀
+
+
+# 06_Fase_6_Seguridad y Tests Automáticos.md
+
+# 🚀 Fase 6: Integración del Módulo IA
+
+---
+
+## 6.1 Cliente HTTP en Frontend 📡
+
+- **AudioUploadService**
+  - Método `uploadAudio(audioFile)` → POST `/audios/upload`
+  - Incluye el JWT en cabecera `Authorization: Bearer ...`
+- **Indicador de Procesamiento**
+  - Mostrar un spinner o banner “Procesando IA…”
+  - Deshabilitar botón de subir hasta recibir respuesta
+
+---
+
+## 6.2 Visualización de Resultados 📊
+
+- **EmotionCard**
+  - Muestra etiqueta de emoción (triste, preocupado, molesto, alegre)
+  - Barra o gráfico de confianza (0–100%)
+- **AudioHistoryPage**
+  - Tabla o lista con columnas: Fecha, Emoción, Confianza
+  - Permitir filtrar por etiqueta y rango de fechas
+
+---
+
+## 6.3 Mejora de UX 🎨
+
+- **Accesibilidad**
+  - Etiquetas ARIA en controles de audio y botones
+  - Contraste de colores conforme a WCAG
+- **Descarga de Informe**
+  - Botón “Descargar PDF” junto a cada resultado
+  - Generar PDF con resumen de emociones y timestamp
+
+---
+
+
+# 07_Fase_7_Despliegue y Monitorización.md
+
+# 🚀 Fase 7: Seguridad y Tests Automáticos
+
+---
+
+## 7.1 Seguridad de Formularios 🛡️
+
+- **Protección CSRF**
+  - Token en formularios (Django/Flask) o cabecera `X-CSRF-Token` (FastAPI)
+- **Sanitización de Inputs**
+  - Escapar caracteres en texto libre
+  - Validar y limpiar nombre, email, comentarios
+
+---
+
+## 7.2 Testing 🧪
+
+- **Unit Tests**
+  - Lógica de autenticación, subida de audios y llamadas IA (mocking)
+- **Integration Tests**
+  - Endpoints críticos: `/auth/*`, `/audios/*`, `/analyze`, `/alerts/*`
+- **End-to-End**
+  - Flujos principales con Playwright o Selenium:
+    1. Signup → Login
+    2. Upload Audio → Ver Resultado → Generar Alerta
+
+---
+
+## 7.3 Revisión de Vulnerabilidades ⚠️
+
+- **Escaneo de Dependencias**
+  - `pip-audit` / `safety` (Python)
+  - `npm audit` (Node)
+- **Cobertura de Código**
+  - Meta mínima: 80%
+  - Informes automáticos en CI (Codecov)
+
+
+# 08_Fase_8_Despliegue y Monitorización.md
+
+---
+# 🚀 Fase 8: Despliegue y Monitorización
+---
+
+## 8.1 Preparar Contenedores (Docker) 🐳
+
+- **Backend**
+  - Contenedor separado con código y dependencias
+  - Variables de entorno: `JWT_SECRET`, `DB_URL`, etc.
+- **Frontend**
+  - Contenedor de build estático
+  - Configurar `REACT_APP_API_URL` o equivalente
+
+---
+
+## 8.2 Despliegue en la Nube ☁️
+
+- **Proveedor**
+  - Heroku / AWS Fargate / Azure App Service / GCP Cloud Run
+- **Servicios**
+  - Base de datos gestionada (RDS, Cloud SQL)
+  - Bucket de almacenamiento (S3, Blob Storage)
+
+---
+
+## 8.3 Monitorización y Logs 📈
+
+- **Logging Centralizado**
+  - Papertrail, LogDNA o ELK Stack
+- **Alertas**
+  - Umbral de errores 5xx > 1%
+  - Latencia > 500 ms → Notificación Slack/Email
+
+---
+
+## 8.4 Documentación 📝
+
+- **README.md**
+  - Pasos de instalación, configuración y despliegue
+- **OpenAPI / Swagger**
+  - Documentar todos los endpoints en `/docs`
+- **Manual de Operaciones**
+  - Diagrama de arquitectura y health checks (`/healthz`, `/metrics`)
+
+
