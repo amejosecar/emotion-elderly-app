@@ -7,7 +7,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
-from app.models.user import User
+from app.models import User, Audio, Alert, Emotion, Role
+
 from app.schemas.auth import Token
 from app.schemas.user import UserCreate
 from app.core.security import (

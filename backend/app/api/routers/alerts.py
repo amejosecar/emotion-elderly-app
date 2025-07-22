@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
 from app.core.security import get_current_user
-from app.models.alert import Alert
+from app.models import User, Audio, Alert, Emotion, Role
 from app.schemas.alert import AlertList
 
 router = APIRouter()

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db
-from app.models.user import User
+from app.models import User, Audio, Alert, Emotion, Role
 from app.schemas.user import UserCreate, UserRead
 from app.core.security import get_password_hash
 

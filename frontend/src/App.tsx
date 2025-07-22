@@ -1,73 +1,53 @@
-//  C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\App.tsx
-// frontend/src/App.tsx
+// src/App.tsx
 
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
+// Páginas públicas
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Auth from "./pages/Auth"; // tu página de signup
+// Páginas privadas
+import Dashboard from "./pages/Dashboard";
+import AudioHistory from "./pages/AudioHistory";
+import Alerts from "./pages/Alerts";
+import Analyze from "./pages/Analyze";
+import UploadAudio from "./pages/UploadAudio";
 
-import Home from './pages/Home';
-import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard';
-import AudioHistory from './pages/AudioHistory';
-import Analyze from './pages/Analyze';
-import Alerts from './pages/Alerts';
-import UploadAudio from './pages/UploadAudio'; // ✅ nueva página añadida
+import PrivateRoute from "./components/PrivateRoute";
+import Layout from "./components/layout/Layout";
 
-import ProtectedRoute from './routes/ProtectedRoute';
+const App: React.FC = () => (
+  <BrowserRouter>
+    <Routes>
+      {/* Root público */}
+      <Route path="/" element={<Home />} />
 
-function App() {
-  return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        {/* 🌟 Rutas públicas */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Auth mode="login" />} />
-        <Route path="/signup" element={<Auth mode="signup" />} />
-        <Route path="/analyze" element={<Analyze />} />
+      {/* Autenticación pública */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Auth />} />
 
-        {/* 🔒 Rutas protegidas */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/audios"
-          element={
-            <ProtectedRoute>
-              <AudioHistory />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/alerts"
-          element={
-            <ProtectedRoute>
-              <Alerts />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/upload"
-          element={
-            <ProtectedRoute>
-              <UploadAudio />
-            </ProtectedRoute>
-          }
-        />
+      {/* Rutas protegidas: primero chequear sesión, luego envolver en Layout */}
+      <Route element={<PrivateRoute />}>
+        <Route element={<Layout />}>
+          {/* Redirige "/" dentro de las privadas a dashboard */}
+          <Route index element={<Navigate to="dashboard" replace />} />
 
-        {/* 🚧 Fallback para rutas desconocidas */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <Footer />
-    </BrowserRouter>
-  );
-}
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="audios" element={<AudioHistory />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="analyze" element={<Analyze />} />
+          <Route path="upload" element={<UploadAudio />} />
+
+          {/* Wildcard privado */}
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
+        </Route>
+      </Route>
+
+      {/* Cualquier ruta no definida redirige a la home pública */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </BrowserRouter>
+);
 
 export default App;

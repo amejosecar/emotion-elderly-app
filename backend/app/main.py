@@ -2,39 +2,43 @@
 # main.py
 
 # backend/app/main.py
+# app/main.py
 
-# File: backend/app/main.py
-
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from app.core.security import get_current_user, get_current_user_optional
 
 from app.core.config import settings
 from app.core.logger import configure_logging
 from app.core.metrics import get_metrics_app, metrics_middleware
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_user_optional
 
-from app.api.routers import auth, audios, analyze, alerts
-from app.api.routers.users import router as users_router
+from app.api.routers import auth, users, audios, analyze, alerts
 
-# 🔧 Configurar logging (Loguru)
 configure_logging()
 
-# 🚀 Crear instancia de FastAPI
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url="/openapi.json",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
-# 📊 Montar métricas de Prometheus en /metrics
+# Metrics
 metrics_app = get_metrics_app()
-app.mount("/metrics", metrics_app)
+app.mount(
+    "/static",
+    StaticFiles(directory="app/templates/static"),
+    name="static"
+)
 app.middleware("http")(metrics_middleware)
 
-# 🌐 Configurar CORS
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -43,22 +47,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🏠 Raíz: redirige a /docs o regresa bienvenida
+# Static + Templates
+app.mount("/static", StaticFiles(directory="app/templates/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
+# Home: muestra panel con o sin usuario
 @app.get("/", tags=["root"])
-async def read_root():
-    """End-point raíz. Redirige a la documentación de la API."""
-    return RedirectResponse(url="/docs")
+async def index(request: Request, user=Depends(get_current_user_optional)):
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
-# ❤️ Health check
-@app.get("/healthz", tags=["health"])
-async def health_check():
-    return JSONResponse({"status": "ok"})
+# Logout
+@app.get("/logout", tags=["auth"])
+async def logout():
+    resp = RedirectResponse("/", status_code=303)
+    resp.delete_cookie("access_token")
+    return resp
 
-# 🔐 Routers protegidos por autenticación
-protected_dependencies = [Depends(get_current_user)]
-
+# Routers
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(users_router, prefix="/users", tags=["users"], dependencies=protected_dependencies)
-app.include_router(audios.router, prefix="/audios", tags=["audios"], dependencies=protected_dependencies)
-app.include_router(analyze.router, prefix="/analyze", tags=["analyze"], dependencies=protected_dependencies)
-app.include_router(alerts.router, prefix="/alerts", tags=["alerts"], dependencies=protected_dependencies)
+protected = [Depends(get_current_user)]
+app.include_router(users.router,    prefix="/users",   tags=["users"],    dependencies=protected)
+app.include_router(audios.router,   prefix="/audios",  tags=["audios"],   dependencies=protected)
+app.include_router(analyze.router,  prefix="/analyze", tags=["analyze"],  dependencies=protected)
+app.include_router(alerts.router,   prefix="/alerts",  tags=["alerts"],   dependencies=protected)

@@ -7,9 +7,7 @@ from pathlib import Path
 
 from app.api.dependencies import get_db
 from app.core.security import get_current_user
-from app.models.audio import Audio
-from app.models.emotion import Emotion
-from app.models.alert import Alert
+from app.models import User, Audio, Alert, Emotion, Role
 from app.schemas.emotion import AnalysisResult
 from app.schemas.alert import AlertRead
 from app.services.emotion_recognition import recognize_emotions

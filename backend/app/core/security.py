@@ -1,75 +1,81 @@
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\security.py
 # security.py
-# backend/app/core/security.py
+# app/core/security.py
 # backend/app/core/security.py
 
 from datetime import datetime, timedelta
+from typing import Any, Union
+
+from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
+from app.database import get_db
+from app.models import User
 from app.core.config import settings
-from app.db.session import SessionLocal
-from app.models.user import User
+
+# -------------------
+# Password hashing
+# -------------------
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-# Creamos el esquema Bearer
-bearer_scheme = HTTPBearer()
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(plain_password: str, hashed: str) -> bool:
-    return pwd_context.verify(plain_password, hashed)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
-def create_access_token(data: dict) -> str:
+# -------------------
+# JWT token handling
+# -------------------
+
+def create_access_token(
+    data: dict[str, Any],
+    expires_delta: Union[timedelta, None] = None
+) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+    return encoded_jwt
+
+# -------------------
+# Dependencies
+# -------------------
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    request: Request,
+    db: Session = Depends(get_db),
 ) -> User:
-    """
-    Extrae el token Bearer, lo decodifica y busca el User activo.
-    """
-    token = credentials.credentials
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str | None = payload.get("sub")
         if user_id is None:
-            raise ValueError()
-    except (JWTError, ValueError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    db = SessionLocal()
-    user = db.query(User).get(int(user_id))
-    db.close()
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Usuario inactivo o no encontrado"
-        )
+    user = db.get(User, int(user_id))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     return user
 
-def require_role(role_name: str):
-    """
-    Verifica que el current_user tenga el rol indicado.
-    """
-    def checker(user: User = Depends(get_current_user)) -> User:
-        if not any(r.name == role_name for r in user.roles):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Se requiere rol `{role_name}`"
-            )
-        return user
-    return checker
+def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User | None:
+    try:
+        return get_current_user(request, db)
+    except HTTPException:
+        return None

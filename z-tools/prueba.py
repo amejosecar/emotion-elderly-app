@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Script que recorre recursivamente las carpetas raíz y combina
-el contenido de todos los archivos en un único fichero de salida.
+el contenido de todos los archivos en un único fichero de salida,
+excluyendo la carpeta node_modules.
 """
 
 import time
@@ -13,12 +14,14 @@ def main():
     script_dir = Path(__file__).resolve().parent
     project_root = script_dir.parent
 
+    # Carpeta a excluir
+    excluded_dir = project_root / "frontend" / "node_modules"
+
     roots = [
-        #project_root,
         project_root / "backend",
         project_root / "frontend",
-        project_root / "docs",
-        project_root / "test",
+        # project_root / "docs",
+        # project_root / "test",
     ]
 
     # Archivo de salida
@@ -39,6 +42,9 @@ def main():
                 try:
                     resolved = file.resolve()
                 except Exception:
+                    continue
+                # Excluir archivos dentro de node_modules
+                if excluded_dir in resolved.parents:
                     continue
                 # Evita duplicados y el propio archivo de salida
                 if resolved == output_file.resolve() or resolved in processed:
