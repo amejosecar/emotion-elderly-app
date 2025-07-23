@@ -20,8 +20,8 @@ def main():
     roots = [
         project_root / "backend",
         project_root / "frontend",
-        # project_root / "docs",
-        # project_root / "test",
+        #project_root / "docs",
+        #project_root / "test",
     ]
 
     # Archivo de salida

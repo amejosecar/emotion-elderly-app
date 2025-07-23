@@ -1,17 +1,14 @@
-//src/components/layout/Layout.tsx
-
-import React, { ReactNode } from "react";
+import React from "react";
 import Navbar from "./Navbar";
+import { Outlet } from "react-router-dom";
 
-type LayoutProps = {
-  children: ReactNode;
-};
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC = () => {
   return (
     <>
       <Navbar />
-      <main style={{ padding: "1rem" }}>{children}</main>
+      <main style={{ padding: "1rem" }}>
+        <Outlet />
+      </main>
     </>
   );
 };

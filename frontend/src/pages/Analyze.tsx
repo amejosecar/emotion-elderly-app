@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
+//C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
+//Analyze.tsx
+
+import React, { useEffect, useState } from "react";
+import api from "../api/axios";
+import EmotionChart from "../components/EmotionChart";
+import "../styles/spinner.css";
 
 type Emotion = {
   id: number;
@@ -15,13 +20,28 @@ type Alert = {
 };
 
 const Analyze: React.FC = () => {
-  const [result, setResult] = useState<{ emotions: Emotion[]; alerts: Alert[] } | null>(null);
-  const [status, setStatus] = useState<string>('');
+  const [result, setResult] = useState<{
+    emotions: Emotion[];
+    alerts: Alert[];
+  } | null>(null);
+  const [status, setStatus] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    api.get('/analyze') // ⚠️ Esto debe ajustarse si necesitas pasar audio_id por props o URL
-      .then(res => setResult({ emotions: res.data.emotions, alerts: res.data.alerts }))
-      .catch(() => setStatus('❌ Error al obtener análisis'));
+    setLoading(true);
+    setTimeout(() => {
+      api
+        .get("/analyze")
+        .then((res) => {
+          console.log("🔍 Resultado del análisis:", res.data);
+          setResult({ emotions: res.data.emotions, alerts: res.data.alerts });
+          setLoading(false);
+        })
+        .catch(() => {
+          setStatus("❌ Error al obtener análisis");
+          setLoading(false);
+        });
+    }, 500); // medio segundo para mostrar el spinner
   }, []);
 
   return (
@@ -29,49 +49,41 @@ const Analyze: React.FC = () => {
       <h1>Resultados del Análisis</h1>
       {status && <p>{status}</p>}
 
-      {result ? (
+      {loading ? (
+        <div style={{ textAlign: "center", marginTop: "2rem" }}>
+          <div className="spinner" />
+          <p>⏳ Analizando emociones, por favor espera…</p>
+        </div>
+      ) : result ? (
         <>
-          <h2>Emociones Detectadas</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Etiqueta</th>
-                <th>Confianza</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.emotions.map(e => (
-                <tr key={e.id}>
-                  <td>{e.label}</td>
-                  <td>{(e.confidence * 100).toFixed(1)}%</td>
-                  <td>{new Date(e.timestamp).toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {result.emotions.length > 0 ? (
+            <EmotionChart
+              emotions={result.emotions}
+              audioId={result.emotions[0]?.id || 0}
+            />
+          ) : (
+            <p>⚠️ No se detectaron emociones en este audio.</p>
+          )}
 
-          <h2 style={{ marginTop: '2rem' }}>🚨 Alertas</h2>
+          <h2 style={{ marginTop: "2rem" }}>🚨 Alertas</h2>
           {result.alerts.length === 0 ? (
             <p>Sin alertas generadas.</p>
           ) : (
             <ul>
-              {result.alerts.map(a => (
+              {result.alerts.map((a) => (
                 <li key={a.id}>
-                  {a.message} <em>({new Date(a.created_at).toLocaleString()})</em>
+                  {a.message}{" "}
+                  <em>({new Date(a.created_at).toLocaleString()})</em>
                 </li>
               ))}
             </ul>
           )}
         </>
       ) : (
-        <p>Cargando datos...</p>
+        <p>No hay resultados disponibles.</p>
       )}
     </main>
   );
 };
 
 export default Analyze;
-
-// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
-// # Analyze.tsx

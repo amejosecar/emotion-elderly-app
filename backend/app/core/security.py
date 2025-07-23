@@ -56,8 +56,16 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     token = request.cookies.get("access_token")
+
+    # 🔍 Si no está en cookies, buscar en Authorization header
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
     if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str | None = payload.get("sub")
@@ -70,6 +78,7 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     return user
+
 
 def get_current_user_optional(
     request: Request,

@@ -1,3 +1,1388 @@
+Creado el 2025-07-23 10:04:46
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore
+__pycache__
+.venv
+*.keras
+sonido/
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\app.db
+# Error al leer este archivo: 'utf-8' codec can't decode byte 0x86 in position 98: invalid start byte
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\package-lock.json
+{
+  "name": "emotion-elderly-app",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {}
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\README.md
+# Proyecto Emotion Elderly App
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env
+# backend/.env
+SECRET_KEY=mysecret
+DATABASE_URL=sqlite:///./app.db
+HUGGINGFACE_MODEL=CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-elderly
+
+# perímetro CORS (separado por comas)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env.example
+# Seguridad
+SECRET_KEY=tu_jwt_secret
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+# Base de datos
+DATABASE_URL=postgresql://user:pass@localhost:5432/emotions_db
+
+# IA
+HUGGINGFACE_MODEL=CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-elderly
+STORAGE_PATH=./data/audios
+
+# CORS
+CORS_ORIGINS=http://localhost:3000
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic.ini
+# backend/alembic.ini
+
+[alembic]
+# carpeta que contiene env.py y versions/
+script_location = alembic
+# URL de tu base de datos real
+# sqlalchemy.url = sqlite:///./app.db
+sqlalchemy.url = sqlite:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/app.db
+
+# añade backend al PYTHONPATH si lo necesitas
+prepend_sys_path = .
+
+[loggers]
+keys = root,sqlalchemy,alembic
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = WARNING
+handlers = console
+
+[logger_sqlalchemy]
+level = WARNING
+handlers =
+qualname = sqlalchemy.engine
+
+[logger_alembic]
+level = INFO
+handlers =
+qualname = alembic
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(levelname)-5.5s [%(name)s] %(message)s
+datefmt = %H:%M:%S
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app.db
+# Error al leer este archivo: 'utf-8' codec can't decode byte 0x86 in position 98: invalid start byte
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\requirements.txt
+# Error al leer este archivo: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\env.py
+#C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\env.py
+#env.py
+
+# backend/alembic/env.py
+
+import sys
+import os
+
+# Añade 'backend' al PYTHONPATH para que 'app' sea resoluble
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from logging.config import fileConfig
+from sqlalchemy import engine_from_config, pool
+from alembic import context
+
+from app.core.config import settings
+from app.db.base import Base
+
+# Importa tus modelos para que Base.metadata los conozca
+import app.models.user
+import app.models.role
+import app.models.audio
+import app.models.emotion
+import app.models.alert
+
+# metadata que Alembic usará para autogenerar
+target_metadata = Base.metadata
+
+# Carga configuración de alembic.ini
+config = context.config
+fileConfig(config.config_file_name)
+config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+
+
+def run_migrations_offline():
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+    )
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online():
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()
+    
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\README
+Generic single-database configuration.
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\script.py.mako
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, Sequence[str], None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    ${downgrades if downgrades else "pass"}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\versions\0df35657cc1b_initial_schema.py
+"""Initial schema
+
+Revision ID: 0df35657cc1b
+Revises: 
+Create Date: 2025-07-17 13:51:48.882274
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '0df35657cc1b'
+down_revision: Union[str, Sequence[str], None] = None
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    pass
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    pass
+    # ### end Alembic commands ###
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\versions\307613368dfe_initial_schema.py
+"""Initial schema
+
+Revision ID: 307613368dfe
+Revises: 0df35657cc1b
+Create Date: 2025-07-17 14:09:55.657333
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = '307613368dfe'
+down_revision: Union[str, Sequence[str], None] = '0df35657cc1b'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('roles',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
+    op.create_index(op.f('ix_roles_id'), 'roles', ['id'], unique=False)
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('email', sa.String(), nullable=False),
+    sa.Column('hashed_password', sa.String(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
+    op.create_table('audios',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('file_path', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_audios_id'), 'audios', ['id'], unique=False)
+    op.create_table('emotions',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('audio_id', sa.Integer(), nullable=False),
+    sa.Column('label', sa.String(length=50), nullable=False),
+    sa.Column('confidence', sa.Float(), nullable=False),
+    sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['audio_id'], ['audios.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_emotions_id'), 'emotions', ['id'], unique=False)
+    op.create_table('alerts',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('emotion_id', sa.Integer(), nullable=False),
+    sa.Column('message', sa.String(length=255), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['emotion_id'], ['emotions.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_alerts_id'), 'alerts', ['id'], unique=False)
+    # ### end Alembic commands ###
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_alerts_id'), table_name='alerts')
+    op.drop_table('alerts')
+    op.drop_index(op.f('ix_emotions_id'), table_name='emotions')
+    op.drop_table('emotions')
+    op.drop_index(op.f('ix_audios_id'), table_name='audios')
+    op.drop_table('audios')
+    op.drop_index(op.f('ix_users_id'), table_name='users')
+    op.drop_index(op.f('ix_users_email'), table_name='users')
+    op.drop_table('users')
+    op.drop_index(op.f('ix_roles_id'), table_name='roles')
+    op.drop_table('roles')
+    # ### end Alembic commands ###
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\database.py
+# backend/app/database.py
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+
+from app.core.config import settings
+
+# Declarative base para tus modelos
+Base = declarative_base()
+
+# URL única para la BD (sqlite, postgres, mysql, etc.)
+DATABASE_URL = settings.DATABASE_URL
+
+# Parámetros de conexión específicos para SQLite
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+# Crear el engine
+engine = create_engine(
+    DATABASE_URL,
+    connect_args=connect_args
+)
+
+# Sesión local para dependencias
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+def get_db():
+    """
+    Dependencia de FastAPI para obtener una sesión de DB.
+    Y la cierra al terminar la request.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\main.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\main.py
+# main.py
+
+# backend/app/main.py
+# app/main.py
+
+from fastapi import FastAPI, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from app.core.security import get_current_user, get_current_user_optional
+
+from app.core.config import settings
+from app.core.logger import configure_logging
+from app.core.metrics import get_metrics_app, metrics_middleware
+from app.core.security import get_current_user, get_current_user_optional
+
+from app.api.routers import auth, users, audios, analyze, alerts
+
+configure_logging()
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    openapi_url="/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# Metrics
+metrics_app = get_metrics_app()
+app.mount(
+    "/static",
+    StaticFiles(directory="app/templates/static"),
+    name="static"
+)
+app.middleware("http")(metrics_middleware)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Static + Templates
+app.mount("/static", StaticFiles(directory="app/templates/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
+# Home: muestra panel con o sin usuario
+@app.get("/", tags=["root"])
+async def index(request: Request, user=Depends(get_current_user_optional)):
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
+
+# Logout
+@app.get("/logout", tags=["auth"])
+async def logout():
+    resp = RedirectResponse("/", status_code=303)
+    resp.delete_cookie("access_token")
+    return resp
+
+# Routers
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+protected = [Depends(get_current_user)]
+app.include_router(users.router,    prefix="/users",   tags=["users"],    dependencies=protected)
+app.include_router(audios.router,   prefix="/audios",  tags=["audios"],   dependencies=protected)
+app.include_router(analyze.router,  prefix="/analyze", tags=["analyze"],  dependencies=protected)
+app.include_router(alerts.router,   prefix="/alerts",  tags=["alerts"],   dependencies=protected)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models.py
+# backend/app/models.py
+
+from datetime import datetime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Float,
+)
+from sqlalchemy.orm import relationship, declarative_base
+
+Base = declarative_base()
+
+class Role(Base):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), unique=True, index=True, nullable=False)
+    description = Column(String(255), nullable=True)
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    audios = relationship("Audio", back_populates="user", cascade="all, delete")
+    alerts = relationship("Alert", back_populates="user", cascade="all, delete")
+
+class Audio(Base):
+    __tablename__ = "audios"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    file_path = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User", back_populates="audios")
+    emotions = relationship("Emotion", back_populates="audio", cascade="all, delete")
+
+class Emotion(Base):
+    __tablename__ = "emotions"
+    id = Column(Integer, primary_key=True, index=True)
+    audio_id = Column(Integer, ForeignKey("audios.id"), nullable=False)
+    label = Column(String(50), nullable=False)
+    confidence = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    audio = relationship("Audio", back_populates="emotions")
+    alerts = relationship("Alert", back_populates="emotion", cascade="all, delete")
+
+class Alert(Base):
+    __tablename__ = "alerts"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    emotion_id = Column(Integer, ForeignKey("emotions.id"), nullable=False)
+    message = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    user = relationship("User", back_populates="alerts")
+    emotion = relationship("Emotion", back_populates="alerts")
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\__init__.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\dependencies.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\dependencies.py
+# dependencies.py
+from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.db.session import SessionLocal
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\errors.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\errors.py
+# errors.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\alerts.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\alerts.py
+# alerts.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.api.dependencies import get_db
+from app.core.security import get_current_user
+from app.models import User, Audio, Alert, Emotion, Role
+from app.schemas.alert import AlertList
+
+router = APIRouter()
+
+@router.get("/", response_model=AlertList, summary="Listar alertas")
+def list_alerts(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    alerts = db.query(Alert).filter(Alert.user_id == current_user.id).all()
+    return AlertList(alerts=alerts)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze.py
+# analyze.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+import logging
+from pathlib import Path
+
+from app.api.dependencies import get_db
+from app.core.security import get_current_user
+from app.models import User, Audio, Alert, Emotion, Role
+from app.schemas.emotion import AnalysisResult
+from app.schemas.alert import AlertRead
+from app.services.emotion_recognition import recognize_emotions
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+ALERT_THRESHOLD = 0.8
+
+@router.post("/", response_model=AnalysisResult, summary="Analizar emociones")
+def analyze_audio(
+    audio_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    # 1) Verificar existencia y propiedad
+    audio = (
+        db.query(Audio)
+          .filter(Audio.id == audio_id, Audio.user_id == current_user.id)
+          .first()
+    )
+    if not audio:
+        raise HTTPException(status_code=404, detail="Audio no encontrado")
+
+    # 2) Normalizar ruta y validar en disco
+    path = Path(audio.file_path).expanduser().resolve()
+    logger.info(f"Analizando audio en: {path}")
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"Audio no existe: {path}")
+
+    # 3) Llamar al servicio de reconocimiento
+    try:
+        results = recognize_emotions(str(path))
+    except FileNotFoundError as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        logger.error(str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+    except Exception:
+        logger.exception("Error interno al analizar emociones")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Fallo al analizar emociones"
+        )
+
+    # 4) Persistir emociones y generar alertas
+    saved_emotions, generated_alerts = [], []
+    for r in results:
+        emo = Emotion(audio_id=audio.id, label=r["label"], confidence=r["score"])
+        db.add(emo); db.commit(); db.refresh(emo)
+        saved_emotions.append(emo)
+
+        if r["score"] >= ALERT_THRESHOLD:
+            msg = f"Detected {r['label']} with confidence {r['score']:.2f}"
+            al = Alert(user_id=current_user.id, emotion_id=emo.id, message=msg)
+            db.add(al); db.commit(); db.refresh(al)
+            generated_alerts.append(al)
+
+    return AnalysisResult(
+        audio_id=audio.id,
+        emotions=saved_emotions,
+        alerts=generated_alerts
+    )
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\audios.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\audios.py
+# audios.py
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from sqlalchemy.orm import Session
+from uuid import uuid4
+import os
+
+from app.api.dependencies import get_db
+from app.core.config import settings
+from app.core.security import get_current_user
+from app.models import User, Audio, Alert, Emotion, Role
+from app.schemas.audio import AudioRead
+
+router = APIRouter()
+
+@router.post("/", response_model=AudioRead, summary="Subir audio")
+async def upload_audio(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # 1. Guardar el archivo en disco
+    ext = os.path.splitext(file.filename)[1]
+    unique_name = f"{uuid4().hex}{ext}"
+    save_dir = settings.STORAGE_PATH
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, unique_name)
+
+    try:
+        content = await file.read()
+        with open(save_path, "wb") as f:
+            f.write(content)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error guardando el archivo")
+
+    # 2. Crear registro en la base de datos
+    audio = Audio(user_id=current_user.id, file_path=save_path)
+    db.add(audio)
+    db.commit()
+    db.refresh(audio)
+
+    return audio
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\auth.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\auth.py
+# auth.py
+# backend/app/api/routers/auth.py
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+
+from app.api.dependencies import get_db
+from app.models import User, Audio, Alert, Emotion, Role
+
+from app.schemas.auth import Token
+from app.schemas.user import UserCreate
+from app.core.security import (
+    get_password_hash, verify_password,
+    create_access_token, get_current_user  # ✅ Importación corregida
+)
+
+router = APIRouter()
+
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == user.email).first():
+        raise HTTPException(400, "Email registrado")
+    hashed = get_password_hash(user.password)
+    new = User(email=user.email, hashed_password=hashed)
+    db.add(new); db.commit(); db.refresh(new)
+    return {"message": "Usuario creado"}
+
+@router.post("/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(),
+          db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(401, "Credenciales inválidas")
+    token = create_access_token({"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
+
+@router.post("/refresh", response_model=Token)
+def refresh_token(user: User = Depends(get_current_user)):
+    new_token = create_access_token({"sub": str(user.id)})
+    return {"access_token": new_token, "token_type": "bearer"}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\users.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.api.dependencies import get_db
+from app.models import User, Audio, Alert, Emotion, Role
+from app.schemas.user import UserCreate, UserRead
+from app.core.security import get_password_hash
+
+router = APIRouter()
+
+@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user_in.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    new_user = User(
+        email=user_in.email,
+        hashed_password=get_password_hash(user_in.password)
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\config.py
+# backend/app/core/config.py
+
+from typing import List, Union
+from pydantic import BaseSettings, Field, validator
+
+
+class Settings(BaseSettings):
+    """
+    Configuración central de la aplicación, cargada desde .env.
+    """
+
+    # Seguridad y JWT
+    SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # URL de la base de datos: un único parámetro para SQLite, Postgres, MySQL, etc.
+    DATABASE_URL: str = "sqlite:///./app.db"
+
+    # Modelo de Hugging Face para análisis de voz
+    HUGGINGFACE_MODEL: str = "CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-elderly"
+
+    # Ruta local de almacenamiento de audios
+    STORAGE_PATH: str = "./sonido/audios"
+
+    # Orígenes permitidos para CORS (puede venir como CSV en .env)
+    CORS_ORIGINS: Union[str, List[str]] = Field(
+        default_factory=lambda: ["http://localhost:3000"]
+    )
+
+    # Configuración de logging
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "[{time:YYYY-MM-DD HH:mm:ss}] {level} | {message}"
+
+    # Metadatos de la API
+    PROJECT_NAME: str = "Emotion Elderly API"
+    VERSION: str = "0.1.0"
+
+    @validator("CORS_ORIGINS", pre=True)
+    def split_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        """
+        Permite definir CORS_ORIGINS en .env como un CSV
+        y lo convierte a lista de cadenas.
+        """
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
+
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+
+
+# Instancia global de configuración
+settings = Settings()
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\logger.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\logger.py
+# logger.py
+from loguru import logger
+import sys
+from app.core.config import settings
+
+def configure_logging():
+    logger.remove()
+    logger.add(
+        sys.stdout,
+        level=settings.LOG_LEVEL,
+        format=settings.LOG_FORMAT,
+        enqueue=True,
+        backtrace=True,
+        diagnose=True,
+    )
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\metrics.py
+#backend/app/core/metrics.py
+from prometheus_client import make_asgi_app, Counter, Histogram
+from fastapi import Request, Response
+
+REQUEST_COUNT = Counter(
+    "api_request_count",
+    "Número de peticiones recibidas",
+    ["method", "endpoint", "http_status"],
+)
+REQUEST_LATENCY = Histogram(
+    "api_request_latency_seconds",
+    "Latencia de petición",
+    ["method", "endpoint"],
+)
+
+def get_metrics_app():
+    return make_asgi_app()
+
+async def metrics_middleware(request: Request, call_next):
+    method = request.method
+    endpoint = request.url.path
+    with REQUEST_LATENCY.labels(method, endpoint).time():
+        response: Response = await call_next(request)
+    REQUEST_COUNT.labels(method, endpoint, response.status_code).inc()
+    return response
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\security.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\security.py
+# security.py
+# app/core/security.py
+# backend/app/core/security.py
+
+from datetime import datetime, timedelta
+from typing import Any, Union
+
+from fastapi import Depends, HTTPException, Request, status
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from app.database import get_db
+from app.models import User
+from app.core.config import settings
+
+# -------------------
+# Password hashing
+# -------------------
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+# -------------------
+# JWT token handling
+# -------------------
+
+def create_access_token(
+    data: dict[str, Any],
+    expires_delta: Union[timedelta, None] = None
+) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (
+        expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
+    return encoded_jwt
+
+# -------------------
+# Dependencies
+# -------------------
+
+def get_current_user(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User:
+    token = request.cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str | None = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    user = db.get(User, int(user_id))
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    return user
+
+def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> User | None:
+    try:
+        return get_current_user(request, db)
+    except HTTPException:
+        return None
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\__init__.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\db\base.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\db\base.py
+# base.py
+from sqlalchemy.orm import declarative_base
+
+Base = declarative_base()
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\db\session.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\db\session.py
+# session.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from app.core.config import settings
+
+# El engine lee la URL desde settings (cad str)
+engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread": False})
+
+# Cada petición obtiene su propia sesión
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\alert.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\alert.py
+# alert.py
+from datetime import datetime
+from sqlalchemy import Column, Integer, ForeignKey, String, DateTime
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+
+class Alert(Base):
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    emotion_id = Column(Integer, ForeignKey("emotions.id"), nullable=False)
+    message = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    user = relationship("User", back_populates="alerts")
+    emotion = relationship("Emotion", back_populates="alerts")
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\audio.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\audio.py
+# audio.py
+from datetime import datetime
+from sqlalchemy import Column, Integer, ForeignKey, String, DateTime
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+
+class Audio(Base):
+    __tablename__ = "audios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    file_path = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    user = relationship("User", back_populates="audios")
+    emotions = relationship("Emotion", back_populates="audio", cascade="all, delete-orphan")
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\emotion.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\emotion.py
+# emotion.py
+from datetime import datetime
+from sqlalchemy import Column, Integer, ForeignKey, String, Float, DateTime
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+
+class Emotion(Base):
+    __tablename__ = "emotions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    audio_id = Column(Integer, ForeignKey("audios.id"), nullable=False)
+    label = Column(String(50), nullable=False)
+    confidence = Column(Float, nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+    # Relaciones
+    audio = relationship("Audio", back_populates="emotions")
+    alerts = relationship("Alert", back_populates="emotion", cascade="all, delete-orphan")
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\role.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\role.py
+# role.py
+from sqlalchemy import Column, Integer, String
+from app.db.base import Base
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), unique=True, nullable=False)
+    description = Column(String(255), nullable=True)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\user.py
+# backend/app/models/user.py
+
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship
+from app.db.base import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+
+    # Relaciones
+    audios = relationship(
+        "Audio",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    alerts = relationship(
+        "Alert",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\alert.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\alert.py
+# alert.py
+from pydantic import BaseModel
+from datetime import datetime
+from typing import List
+
+from app.schemas.emotion import EmotionRead
+
+class AlertRead(BaseModel):
+    id: int
+    user_id: int
+    emotion: EmotionRead
+    message: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class AlertList(BaseModel):
+    alerts: List[AlertRead]
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\audio.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\audio.py
+# audio.py
+from pydantic import BaseModel
+from datetime import datetime
+
+class AudioRead(BaseModel):
+    id: int
+    file_path: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\auth.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\auth.py
+# auth.py
+from pydantic import BaseModel
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\emotion.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\emotion.py
+# emotion.py
+from pydantic import BaseModel, Field
+from datetime import datetime
+from typing import List
+
+class EmotionRead(BaseModel):
+    id: int
+    audio_id: int
+    label: str
+    confidence: float
+    timestamp: datetime
+
+    class Config:
+        orm_mode = True
+
+class AnalysisResult(BaseModel):
+    audio_id: int
+    emotions: List[EmotionRead]
+    # Forward‐ref: no import directo de AlertRead aquí
+    alerts: List["AlertRead"] = Field(default_factory=list)
+
+    class Config:
+        orm_mode = True
+
+# Import tardío de AlertRead para resolver la forward‐ref
+from app.schemas.alert import AlertRead
+
+# Ahora sí la resolvemos
+AnalysisResult.update_forward_refs()
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\user.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\user.py
+# user.py
+from pydantic import BaseModel, EmailStr
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserRead(BaseModel):
+    id: int
+    email: EmailStr
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\audio_service.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\audio_service.py
+# audio_service.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
+# emotion_recognition.py
+from typing import List, Dict
+from transformers import pipeline
+from app.core.config import settings
+from pathlib import Path
+import soundfile as sf
+import numpy as np
+
+# Cargamos el pipeline una sola vez
+try:
+    emotion_pipeline = pipeline(
+        "audio-classification",
+        model=settings.HUGGINGFACE_MODEL,
+        top_k=5
+    )
+except Exception:
+    emotion_pipeline = None
+
+def recognize_emotions(file_path: str) -> List[Dict]:
+    """
+    Ejecuta el modelo de SER sobre el archivo de audio,
+    asegurando que la señal sea mono.
+    """
+    if emotion_pipeline is None:
+        raise RuntimeError("Pipeline no inicializado")
+
+    p = Path(file_path).expanduser().resolve()
+    if not p.exists():
+        raise FileNotFoundError(f"Audio no encontrado: {p}")
+
+    data, sr = sf.read(str(p))  # data puede ser mono o multi-canal
+
+    # Si tiene más de un canal, convertir a mono por promedio
+    if data.ndim > 1:
+        data = np.mean(data, axis=1)
+
+    return emotion_pipeline(data, sampling_rate=sr)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\templates\static\00.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\utils\date_utils.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\utils\date_utils.py
+# date_utils.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\utils\file.py
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\utils\file.py
+# file.py
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\test\test_auth.py
+#C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\test\test_auth.py
+# test_auth.py
+# backend/tests/test_auth.py
+
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.core.security import get_password_hash, create_access_token
+
+client = TestClient(app)
+
+@pytest.fixture(scope="module")
+def test_user():
+    db = SessionLocal()
+    email = "test@example.com"
+    password = "test123"
+    hashed = get_password_hash(password)
+    user = User(email=email, hashed_password=hashed, is_active=True)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    yield {"email": email, "password": password, "id": user.id}
+    db.delete(user)
+    db.commit()
+    db.close()
+
+def test_login_success(test_user):
+    response = client.post("/auth/login", data={
+        "username": test_user["email"],
+        "password": test_user["password"]
+    })
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+def test_login_fail():
+    response = client.post("/auth/login", data={
+        "username": "wrong@example.com",
+        "password": "wrongpass"
+    })
+    assert response.status_code == 401
+
+def test_protected_route_without_token():
+    response = client.get("/audios")
+    assert response.status_code == 401
+
+def test_protected_route_with_token(test_user):
+    token = create_access_token({"sub": str(test_user["id"])})
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/audios", headers=headers)
+    assert response.status_code == 200
+
+def test_refresh_token(test_user):
+    token = create_access_token({"sub": str(test_user["id"])})
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post("/auth/refresh", headers=headers)
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.env
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.env.example
+# .env.example
+
+VITE_API_URL=http://localhost:8000
+
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.env.example
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.env.example
+# .env.example
+
+VITE_API_URL=http://localhost:8000
+
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.gitignore
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\eslint.config.js
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { globalIgnores } from 'eslint/config'
+
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs['recommended-latest'],
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\index.html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\package-lock.json
 {
   "name": "frontend",
   "version": "0.0.0",
@@ -9,11 +1394,8 @@
       "version": "0.0.0",
       "dependencies": {
         "axios": "^1.10.0",
-        "chart.js": "^4.5.0",
-        "chartjs-plugin-datalabels": "^2.2.0",
         "jwt-decode": "^4.0.0",
         "react": "^19.1.0",
-        "react-chartjs-2": "^5.3.0",
         "react-dom": "^19.1.0",
         "react-router-dom": "^7.7.0"
       },
@@ -1028,12 +2410,6 @@
         "@jridgewell/sourcemap-codec": "^1.4.14"
       }
     },
-    "node_modules/@kurkle/color": {
-      "version": "0.3.4",
-      "resolved": "https://registry.npmjs.org/@kurkle/color/-/color-0.3.4.tgz",
-      "integrity": "sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==",
-      "license": "MIT"
-    },
     "node_modules/@nodelib/fs.scandir": {
       "version": "2.1.5",
       "resolved": "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz",
@@ -1933,27 +3309,6 @@
       },
       "funding": {
         "url": "https://github.com/chalk/chalk?sponsor=1"
-      }
-    },
-    "node_modules/chart.js": {
-      "version": "4.5.0",
-      "resolved": "https://registry.npmjs.org/chart.js/-/chart.js-4.5.0.tgz",
-      "integrity": "sha512-aYeC/jDgSEx8SHWZvANYMioYMZ2KX02W6f6uVfyteuCGcadDLcYVHdfdygsTQkQ4TKn5lghoojAsPj5pu0SnvQ==",
-      "license": "MIT",
-      "dependencies": {
-        "@kurkle/color": "^0.3.0"
-      },
-      "engines": {
-        "pnpm": ">=8"
-      }
-    },
-    "node_modules/chartjs-plugin-datalabels": {
-      "version": "2.2.0",
-      "resolved": "https://registry.npmjs.org/chartjs-plugin-datalabels/-/chartjs-plugin-datalabels-2.2.0.tgz",
-      "integrity": "sha512-14ZU30lH7n89oq+A4bWaJPnAG8a7ZTk7dKf48YAzMvJjQtjrgg5Dpk9f+LbjCF6bpx3RAGTeL13IXpKQYyRvlw==",
-      "license": "MIT",
-      "peerDependencies": {
-        "chart.js": ">=3.0.0"
       }
     },
     "node_modules/color-convert": {
@@ -3207,16 +4562,6 @@
         "node": ">=0.10.0"
       }
     },
-    "node_modules/react-chartjs-2": {
-      "version": "5.3.0",
-      "resolved": "https://registry.npmjs.org/react-chartjs-2/-/react-chartjs-2-5.3.0.tgz",
-      "integrity": "sha512-UfZZFnDsERI3c3CZGxzvNJd02SHjaSJ8kgW1djn65H1KK8rehwTjyrRKOG3VTMG8wtHZ5rgAO5oTHtHi9GCCmw==",
-      "license": "MIT",
-      "peerDependencies": {
-        "chart.js": "^4.1.1",
-        "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
-      }
-    },
     "node_modules/react-dom": {
       "version": "19.1.0",
       "resolved": "https://registry.npmjs.org/react-dom/-/react-dom-19.1.0.tgz",
@@ -3757,3 +5102,1145 @@
     }
   }
 }
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\package.json
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "jwt-decode": "^4.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.35.1",
+    "vite": "^7.0.4"
+  }
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\README.md
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      ...tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      ...tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      ...tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default tseslint.config([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.app.json
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["src"]
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.json
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.node.json
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\vite.config.ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+
+  // Preempaqueta jwt-decode como ESM para que exponga default()
+  optimizeDeps: {
+    include: ["jwt-decode"],
+  },
+
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
+
+  server: {
+    host: true,
+    port: 5173,
+    open: true,
+  },
+});
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\public\index.html
+<!-- # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\public\index.html
+# index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Emotion Elderly</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\App.tsx
+// src/App.tsx
+
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+// Páginas públicas
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Auth from "./pages/Auth"; // tu página de signup
+// Páginas privadas
+import Dashboard from "./pages/Dashboard";
+import AudioHistory from "./pages/AudioHistory";
+import Alerts from "./pages/Alerts";
+import Analyze from "./pages/Analyze";
+import UploadAudio from "./pages/UploadAudio";
+
+import PrivateRoute from "./components/PrivateRoute";
+import Layout from "./components/layout/Layout";
+
+const App: React.FC = () => (
+  <BrowserRouter>
+    <Routes>
+      {/* Root público */}
+      <Route path="/" element={<Home />} />
+
+      {/* Autenticación pública */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Auth />} />
+
+      {/* Rutas protegidas: primero chequear sesión, luego envolver en Layout */}
+      <Route element={<PrivateRoute />}>
+        <Route element={<Layout />}>
+          {/* Redirige "/" dentro de las privadas a dashboard */}
+          <Route index element={<Navigate to="dashboard" replace />} />
+
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="audios" element={<AudioHistory />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="analyze" element={<Analyze />} />
+          <Route path="upload" element={<UploadAudio />} />
+
+          {/* Wildcard privado */}
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
+        </Route>
+      </Route>
+
+      {/* Cualquier ruta no definida redirige a la home pública */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  </BrowserRouter>
+);
+
+export default App;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\index.tsx
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\index.tsx
+// # index.tsx
+// src/index.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { AuthProvider } from "./contexts/AuthContext";
+import "./index.css"; // tus estilos globales
+
+const root = ReactDOM.createRoot(
+  document.getElementById("root") as HTMLElement
+);
+root.render(
+  <React.StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </React.StrictMode>
+);
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\main.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import { AuthProvider } from "./contexts/AuthContext";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </React.StrictMode>
+);
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\vite-env.d.ts
+/// <reference types="vite/client" />
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\api\axios.ts
+// C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\api\axios.ts
+// frontend/src/api/axios.ts
+// src/api/axios.ts
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+});
+
+// Interceptor que añade el Bearer token si existe
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\assets\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\assets\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\PrivateRoute.tsx
+// src/components/PrivateRoute.tsx
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
+const PrivateRoute: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+};
+
+export default PrivateRoute;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\common\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\common\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\Footer.tsx
+// src/components/layout/Footer.tsx
+import React from "react";
+
+const Footer: React.FC = () => (
+  <footer
+    style={{
+      textAlign: "center",
+      padding: "1rem 0",
+      borderTop: "1px solid #eaeaea",
+      marginTop: "2rem",
+    }}
+  >
+    <small>© {new Date().getFullYear()} Emotion Elderly</small>
+  </footer>
+);
+
+export default Footer;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\Layout.tsx
+//src/components/layout/Layout.tsx
+
+import React, { ReactNode } from "react";
+import Navbar from "./Navbar";
+
+type LayoutProps = {
+  children: ReactNode;
+};
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  return (
+    <>
+      <Navbar />
+      <main style={{ padding: "1rem" }}>{children}</main>
+    </>
+  );
+};
+
+export default Layout;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\Navbar.css
+nav {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: #5A5DFF;
+  color: white;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+nav button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+nav button:hover, nav a:hover {
+  text-decoration: underline;
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\Navbar.tsx
+//src/components/layout/Navbar.tsx
+// 📄 src/components/layout/Navbar.tsx
+
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import './Navbar.css';
+
+const Navbar: React.FC = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <nav>
+      <Link to="/">Inicio</Link>
+
+      {isAuthenticated ? (
+        <>
+          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/audios">Audios</Link>
+          <Link to="/alerts">Alertas</Link>
+          <Link to="/upload">Subir Audio</Link>
+
+          {/* 👤 Info del usuario logueado */}
+          {user && (
+            <span style={{ marginLeft: 'auto' }}>
+              👤 <strong>{user.email}</strong>
+            </span>
+          )}
+          <button onClick={handleLogout}>Cerrar sesión</button>
+        </>
+      ) : (
+        <>
+          <Link to="/login">Login</Link>
+          <Link to="/signup">Registrarse</Link>
+        </>
+      )}
+    </nav>
+  );
+};
+
+export default Navbar;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\contexts\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\contexts\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\contexts\AuthContext.tsx
+// src/contexts/AuthContext.tsx
+
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  ReactNode,
+} from "react";
+
+type DecodedToken = {
+  sub: string;
+  exp?: number;
+  iat?: number;
+  // añade aquí más campos si tu token los incluye
+};
+
+type User = {
+  id: string;
+};
+
+type AuthContextType = {
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (token: string) => void;
+  logout: () => void;
+};
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Decodifica sin librerías externas.
+ * Al separar el token en 3 partes y hacer atob sobre la segunda,
+ * obtenemos el JSON del payload.
+ */
+function parseJwt(token: string): DecodedToken {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(json);
+  } catch {
+    throw new Error("Invalid token format");
+  }
+}
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const login = (token: string) => {
+    localStorage.setItem("access_token", token);
+    try {
+      const payload = parseJwt(token);
+      setUser({ id: payload.sub });
+    } catch (err) {
+      console.error("Error al parsear token en AuthProvider:", err);
+      logout();
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    setUser(null);
+  };
+
+  // Al montar, comprobamos si hay token y lo parseamos
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      login(token);
+    }
+  }, []);
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: Boolean(user),
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth debe usarse dentro de AuthProvider");
+  }
+  return ctx;
+};
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\hooks\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\hooks\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Alerts.tsx
+import React from 'react';
+
+const Alerts: React.FC = () => (
+  <main>
+    <h1>Alertas Generadas</h1>
+    <p>Notificaciones automáticas basadas en umbrales de emoción.</p>
+  </main>
+);
+
+export default Alerts;
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Alerts.tsx
+// # Alerts.tsx
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
+import React, { useEffect, useState } from 'react';
+import api from '../api/axios';
+
+type Emotion = {
+  id: number;
+  label: string;
+  confidence: number;
+  timestamp: string;
+};
+
+type Alert = {
+  id: number;
+  message: string;
+  created_at: string;
+};
+
+const Analyze: React.FC = () => {
+  const [result, setResult] = useState<{ emotions: Emotion[]; alerts: Alert[] } | null>(null);
+  const [status, setStatus] = useState<string>('');
+
+  useEffect(() => {
+    api.get('/analyze') // ⚠️ Esto debe ajustarse si necesitas pasar audio_id por props o URL
+      .then(res => setResult({ emotions: res.data.emotions, alerts: res.data.alerts }))
+      .catch(() => setStatus('❌ Error al obtener análisis'));
+  }, []);
+
+  return (
+    <main>
+      <h1>Resultados del Análisis</h1>
+      {status && <p>{status}</p>}
+
+      {result ? (
+        <>
+          <h2>Emociones Detectadas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Etiqueta</th>
+                <th>Confianza</th>
+                <th>Fecha</th>
+              </tr>
+            </thead>
+            <tbody>
+              {result.emotions.map(e => (
+                <tr key={e.id}>
+                  <td>{e.label}</td>
+                  <td>{(e.confidence * 100).toFixed(1)}%</td>
+                  <td>{new Date(e.timestamp).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h2 style={{ marginTop: '2rem' }}>🚨 Alertas</h2>
+          {result.alerts.length === 0 ? (
+            <p>Sin alertas generadas.</p>
+          ) : (
+            <ul>
+              {result.alerts.map(a => (
+                <li key={a.id}>
+                  {a.message} <em>({new Date(a.created_at).toLocaleString()})</em>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : (
+        <p>Cargando datos...</p>
+      )}
+    </main>
+  );
+};
+
+export default Analyze;
+
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
+// # Analyze.tsx
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
+import React, { useEffect, useState } from 'react';
+import api from '../api/axios';
+
+type Audio = {
+  id: number;
+  file_path: string;
+  created_at: string;
+};
+
+const AudioHistory: React.FC = () => {
+  const [audios, setAudios] = useState<Audio[]>([]);
+  const [status, setStatus] = useState<string>('');
+
+  useEffect(() => {
+    api.get('/audios/')
+      .then(res => setAudios(res.data))
+      .catch(() => setStatus('❌ Error al cargar audios'));
+  }, []);
+
+  const handleAnalyze = async (id: number) => {
+    setStatus('');
+    try {
+      const res = await api.post(`/analyze/?audio_id=${id}`);
+      setStatus(`✅ Audio ${id} analizado. Emociones detectadas: ${res.data.emotions.length}`);
+    } catch (err: any) {
+      setStatus(err.response?.data?.detail || '❌ Fallo en análisis');
+    }
+  };
+
+  return (
+    <main>
+      <h1>Historial de Audios</h1>
+      {status && <p>{status}</p>}
+
+      {audios.length === 0 ? (
+        <p>No hay audios subidos aún.</p>
+      ) : (
+        <ul>
+          {audios.map(audio => (
+            <li key={audio.id}>
+              <strong>ID:</strong> {audio.id} |
+              <strong> Subido:</strong> {new Date(audio.created_at).toLocaleString()}
+              <button onClick={() => handleAnalyze(audio.id)}>Analizar</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  );
+};
+
+export default AudioHistory;
+
+
+
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
+// # AudioHistory.tsx
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Auth.tsx
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Auth.tsx
+// # Auth.tsx
+// frontend/src/pages/Auth.tsx
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../api/axios";
+
+type Props = { mode: "login" | "signup" };
+
+const Auth: React.FC<Props> = ({ mode }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      if (mode === "signup") {
+        // Signup espera JSON { email, password }
+        await api.post("/auth/signup", { email, password });
+        navigate("/login");
+      } else {
+        // Login espera x-www-form-urlencoded
+        const payload = new URLSearchParams();
+        payload.append("username", email);
+        payload.append("password", password);
+
+        const res = await api.post("/auth/login", payload.toString(), {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        });
+
+        login(res.data.access_token);
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Error inesperado");
+    }
+  };
+
+  return (
+    <main>
+      <h1>{mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}</h1>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        <button type="submit">
+          {mode === "login" ? "Entrar" : "Registrarse"}
+        </button>
+      </form>
+    </main>
+  );
+};
+
+export default Auth;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Dashboard.tsx
+// 📄 src/pages/Dashboard.tsx
+
+import React from "react";
+import { useAuth } from "../contexts/AuthContext";
+
+const Dashboard: React.FC = () => {
+  const { isAuthenticated, user, logout } = useAuth();
+
+  // Si no está autenticado, mostrar mensaje de login
+  if (!isAuthenticated) {
+    return (
+      <main>
+        <h1>Panel de Control</h1>
+        <p>Inicia sesión para ver tus datos y emociones detectadas.</p>
+      </main>
+    );
+  }
+
+  // Si está autenticado pero user todavía null (por alguna razón)
+  if (!user) {
+    return (
+      <main>
+        <h1>Panel de Control</h1>
+        <p>Cargando información de usuario…</p>
+      </main>
+    );
+  }
+
+  // Usuario autenticado y cargado correctamente
+  return (
+    <main>
+      <h1>Panel de Control</h1>
+      <p>
+        Bienvenido <strong>{user.email}</strong>, aquí tienes el resumen de
+        actividad y análisis recientes.
+      </p>
+
+      {/* Aquí puedes agregar tu componente o lógica para mostrar datos/emociones */}
+      {/* por ejemplo: <ActivitySummary data={activityData} /> */}
+
+      <button type="button" onClick={logout}>
+        Cerrar sesión
+      </button>
+    </main>
+  );
+};
+
+export default Dashboard;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Home.tsx
+// C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Home.tsx
+// Home.tsx
+import React from 'react';
+
+const Home: React.FC = () => (
+  <main>
+    <h1>Bienvenido a Emotion Elderly</h1>
+    <p>Sube audios de tus seres queridos para detectar sus emociones.</p>
+  </main>
+);
+
+export default Home;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Login.tsx
+// src/pages/Login.tsx
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
+import { useAuth } from "../contexts/AuthContext";
+import axios from "axios";
+
+const Login: React.FC = () => {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // FastAPI OAuth2PasswordRequestForm espera form-urlencoded
+      const form = new URLSearchParams();
+      form.append("username", email);
+      form.append("password", password);
+
+      const res = await api.post("/auth/login", form, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+
+      // Si tu backend devuelve { access_token }
+      const token = res.data.access_token;
+      login(token);
+      navigate("/dashboard");
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 422 && Array.isArray(err.response.data)) {
+          // validación de Pydantic, convierte a texto
+          const msgs = err.response.data.map(
+            (v: any) => `${v.loc.join(".")}: ${v.msg}`
+          );
+          setError(msgs.join(" • "));
+        } else {
+          // error estándar con detalle
+          setError(
+            (err.response?.data as any)?.detail || "Error al iniciar sesión"
+          );
+        }
+      } else {
+        setError("Error al iniciar sesión");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-container">
+      <h1>Iniciar Sesión</h1>
+      {error && <p className="error">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <label>
+          Email
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+
+        <label>
+          Contraseña
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </label>
+
+        <button type="submit" disabled={loading}>
+          {loading ? "Cargando…" : "Entrar"}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\UploadAudio.tsx
+//src/pages/UploadAudio.tsx
+
+import React, { useState } from 'react';
+import api from '../api/axios';
+
+const UploadAudio: React.FC = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+
+    if (!file) {
+      setMessage('Selecciona un archivo primero');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.post('/audios/', formData);
+      setMessage(`✅ Audio subido con ID ${res.data.id}`);
+    } catch (err: any) {
+      setMessage(err.response?.data?.detail || '❌ Error al subir');
+    }
+  };
+
+  return (
+    <main>
+      <h1>Subir Audio</h1>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={e => setFile(e.target.files?.[0] || null)}
+          required
+        />
+        <button type="submit">Enviar</button>
+      </form>
+
+      {message && <p>{message}</p>}
+    </main>
+  );
+};
+
+export default UploadAudio;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\index.tsx
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\index.tsx
+# index.tsx
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\ProtectedRoute.tsx
+//src/routes/ProtectedRoute.tsx
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+type Props = { children: React.ReactNode };
+
+const ProtectedRoute: React.FC<Props> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+
+  return isAuthenticated ? (
+    <>{children}</>
+  ) : (
+    <Navigate to="/login" replace />
+  );
+};
+
+export default ProtectedRoute;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\Form.css
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+input, button {
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  background-color: #5A5DFF;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #4749cc;
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\theme.ts
+// C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\theme.ts
+// theme.ts
+export const theme = {
+  colors: {
+    primary: '#5A5DFF',
+    secondary: '#FFA34D',
+    background: '#F9FAFB',
+    text: '#333333',
+    error: '#E63946',
+    success: '#2A9D8F',
+  },
+  spacing: {
+    sm: '8px',
+    md: '16px',
+    lg: '24px',
+  },
+  font: {
+    family: 'Arial, sans-serif',
+    size: '16px',
+    weight: '400',
+  },
+};
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
+# formatDate.ts
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
+# .gitkeep
+

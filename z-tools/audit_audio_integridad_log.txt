@@ -1,0 +1,13 @@
+
+🕒 Auditoría ejecutada el 2025-07-23 12:54:19
+
+✅ ./sonido/audios\6e37d8f7d0614f70b6b5a1a0d992302f.wav existe (2106656 bytes)
+✅ ./sonido/audios\911eeac1693845eeb07cbdabd69e282c.wav existe (2106656 bytes)
+✅ ./sonido/audios\a9c9211858894e47b07d94b74641da25.wav existe (2106656 bytes)
+❌ ./sonido/audios\426ea40d7b9e45639dcf829bf25924ec.wav NO existe
+❌ ./sonido/audios\24dc96ac2b484efc9c1b32625ca1d73b.wav NO existe
+❌ ./sonido/audios\2d88861988b64853b14a2796966fe83e.wav NO existe
+❌ ./sonido/audios\88536e3b28b247cb97477a9f8c2b1b74.wav NO existe
+❌ ./sonido/audios\9dd6146cf3b8455b9cddf0ed73ba0d98.wav NO existe
+
+🧹 Audios huérfanos detectados: 5

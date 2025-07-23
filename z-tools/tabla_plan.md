@@ -1,168 +1,51 @@
-# Plan de Proyecto Actualizado
+# 📊 Tablero Global de Estado del Proyecto
 
-| Fase | Nombre                        | Estado         | Comentarios                                                                                                                |
-| ---- | ----------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 5    | Desarrollo del Frontend       | ⏳ Pendiente   | Estructura React creada; falta implementar componentes, formularios de subida y consumo de API                             |
-| 6    | Seguridad y Tests Automáticos | 🟡 En progreso | Tests de auth OK; pendiente agregar pruebas para subida de audio, análisis y listado de alertas; pulir validaciones y CSRF |
-| 7    | Integración del Módulo IA     | ✅ Completado  | Pipeline de Hugging Face integrado con lectura de WAV en memoria, conversión a mono y guardado de resultados en BD         |
-| 8    | Despliegue y Monitorización   | ⏳ Pendiente   | Docker, CI/CD, métricas en Prometheus y alertas en producción por configurar                                               |
+## Estado por Área Funcional y Técnica
 
-# ✅ Evaluación de la Fase 5: Desarrollo del Frontend
-
----
-
-## 1️⃣ Flujo de navegación
-
-**🎯 Plan:**
-
-- Home
-- Auth (login/signup)
-- Dashboard
-- AudioHistory
-- Analyze
-- Alerts
-
-**💻 Código:**
-
-- Todas las rutas están en `App.tsx` usando `React Router`.
-- Se incluyó una ruta adicional `/upload` para subir audio.
-- `ProtectedRoute` protege `Dashboard`, `AudioHistory`, `Alerts` y `UploadAudio`.
-
-**✅ Estado:** Cumplido y ampliado
+| Área Funcional / Técnica       | Fase | Estado         | Comentarios Clave                                                      |
+| ------------------------------ | ---- | -------------- | ---------------------------------------------------------------------- |
+| 🧭 Flujo de navegación         | 5    | ✅ Completo    | Rutas públicas y protegidas bien definidas con React Router            |
+| 🔐 Autenticación               | 5    | ✅ Completo    | Login/signup funcional, JWT en localStorage, contexto de sesión        |
+| 🎧 Subida de audio             | 5    | ✅ Completo    | Formulario funcional, envío a API, confirmación de ID                  |
+| 📜 Histórico de audios         | 5    | ✅ Completo    | Listado con fechas, botón de análisis por audio                        |
+| 📊 Resultados y alertas        | 5    | ⏳ Parcial     | Tabla de emociones y alertas OK; falta visualización gráfica           |
+| ⚠️ Manejo de estados/errores   | 5    | ⏳ Parcial     | Mensajes implementados; falta spinner y validación de archivos         |
+| 🎨 Estilos y UX                | 5    | ⏳ En progreso | Tema base definido; falta responsive y accesibilidad                   |
+| 🧪 Pruebas de usuario          | 5    | ⏳ Por hacer   | Flujos funcionales definidos; falta testing manual y refinamiento      |
+| 🛡️ Seguridad de formularios    | 6    | ❌ No iniciado | No hay CSRF ni sanitización profunda                                   |
+| 🧪 Tests unitarios             | 6    | 🟡 En progreso | Tests de auth OK; falta para audio y análisis                          |
+| 🔁 Tests de integración        | 6    | ⏳ Parcial     | Endpoints críticos parcialmente cubiertos                              |
+| 🧪 Tests E2E (Playwright)      | 6    | ❌ No iniciado | No hay evidencia de pruebas de flujo completo                          |
+| 🧼 Escaneo de vulnerabilidades | 6    | ❌ No iniciado | No se detecta uso de `pip-audit`, `npm audit`, etc.                    |
+| 📈 Cobertura de código         | 6    | ❌ No iniciado | No hay integración con Codecov ni reportes                             |
+| 🤖 Módulo IA                   | 7    | ✅ Completado  | Pipeline Hugging Face funcional, resultados guardados en BD            |
+| 🐳 Dockerización               | 8    | ❌ No iniciado | No hay Dockerfile ni Compose configurado                               |
+| ☁️ Despliegue en la nube       | 8    | ❌ No iniciado | No hay scripts ni configuración para Heroku/AWS/GCP                    |
+| 📊 Monitorización y alertas    | 8    | ❌ No iniciado | No se detecta Prometheus, Papertrail ni alertas configuradas           |
+| 📚 Documentación técnica       | 8    | ⏳ Parcial     | README básico presente; falta manual de operaciones y OpenAPI completo |
 
 ---
 
-## 2️⃣ Autenticación en la interfaz
+## Estado Global por Fase
 
-**🎯 Plan:**
+| Fase | Estado Global    | Comentario                               |
+| ---- | ---------------- | ---------------------------------------- |
+| 5    | 🟡 Casi completo | Solo faltan mejoras visuales y UX final  |
+| 6    | 🟡 En progreso   | Tests y seguridad parcialmente cubiertos |
+| 7    | ✅ Completado    | IA integrada y funcional                 |
+| 8    | ❌ No iniciado   | Requiere configuración completa          |
 
-- Formularios de login y signup
-- Token en `localStorage`
-- Navbar condicional
+mejoras
 
-**💻 Código:**
+4. Persistencia de archivos ⚠️ Parcial La carpeta sonido/ está en .gitignore, lo cual es correcto para producción, pero asegúrate de tener backups o usar almacenamiento externo si es crítico.
 
-- `Auth.tsx`: Formulario con validaciones y mensajes de error.
-- `AuthContext.tsx`: login, logout, y validación de JWT.
-- `Navbar.tsx`: renderiza links según el estado de sesión.
+🧠 Recomendaciones adicionales
+🔄 Sincronización bidireccional: podrías agregar una función que detecte archivos en disco que no están en la base de datos (el caso inverso).
 
-**✅ Estado:** Implementado completamente
+📊 Dashboard de integridad: mostrar en el panel de admin cuántos audios están rotos o huérfanos.
 
----
+🧪 Tests automatizados: ya tienes test_auth.py, podrías agregar tests para verificar que la subida y análisis de audios funciona correctamente.
 
-## 3️⃣ Formulario de subida de audio
+Tu arquitectura está bien pensada, modular y lista para escalar. Si decides migrar a PostgreSQL o usar almacenamiento en la nube, tu código está preparado para adaptarse fácilmente.
 
-**🎯 Plan:**
-
-- Selector de archivos WAV/MP3
-- Previsualización antes de enviar
-- Envío a `/audios/` y mostrar ID
-
-**💻 Código:**
-
-- `UploadAudio.tsx`: Permite seleccionar archivo, enviar y obtener confirmación de ID.
-
-**✅ Estado:** Implementado correctamente
-
----
-
-## 4️⃣ Vista de histórico de audios
-
-**🎯 Plan:**
-
-- `GET /audios/` para listar
-- Mostrar fecha y nombre
-- Botón "Analizar" → `POST /analyze/?audio_id=<id>`
-
-**💻 Código:**
-
-- `AudioHistory.tsx`: Consume `/audios/`, renderiza cada audio con botón para analizar.
-
-**✅ Estado:** Cumplido totalmente
-
----
-
-## 5️⃣ Mostrar resultados y alertas
-
-**🎯 Plan:**
-
-- Tabla/lista con emociones
-- Componente para alertas
-- Visualización con gráficos
-
-**💻 Código:**
-
-- `Analyze.tsx`: emociones en tabla, alertas en lista
-- ❌ No hay componentes gráficos como `Recharts` o `Chart.js`.
-
-**⏳ Estado:** Parcialmente completo (faltan gráficas visuales)
-
----
-
-## 🧩 Manejo de estados y errores
-
-**🎯 Plan:**
-
-- Spinners de carga
-- Mensajes de éxito/error
-- Validación de tamaño/MIME
-
-**💻 Código:**
-
-- Mensajes en `Auth.tsx`, `UploadAudio.tsx`, `AudioHistory.tsx`
-- ❌ Sin spinners ni validación previa de archivos
-
-**⏳ Estado:** Parcialmente implementado
-
----
-
-## 🎨 Estilizar y afinar la UX
-
-**🎯 Plan:**
-
-- Tema global
-- Responsive para móvil/tablet
-- Accesibilidad
-
-**💻 Código:**
-
-- `theme.ts` y `Form.css` configuran estilos base
-- ❌ No se observan media queries ni etiquetas accesibles
-
-**⏳ Estado:** En progreso
-
----
-
-## 🧪 Pruebas de usuario y ajustes finales
-
-**🎯 Plan:**
-
-- Feedback de prototipo
-- Refinamiento de flujos
-- Pruebas completas
-
-**💻 Código:**
-
-- No hay evidencia explícita de tests de usuario
-- Flujos funcionales están bien definidos
-
-**⏳ Estado:** Por hacer
-
----
-
-## 🔍 Resumen final
-
-| Área                 | Estado       |
-| -------------------- | ------------ |
-| Flujo de navegación  | ✅ Completo  |
-| Autenticación        | ✅ Completo  |
-| Subida de audio      | ✅ Completo  |
-| Histórico de audios  | ✅ Completo  |
-| Resultados y alertas | ⏳ Parcial   |
-| Estados y errores    | ⏳ Parcial   |
-| Estilos y UX         | ⏳ Parcial   |
-| Pruebas finales      | ⏳ Por hacer |
-
----
-
-¿Quieres que avancemos con la visualización gráfica de emociones o con la validación de archivos antes de subirlos? Estoy listo para ayudarte a pulir esta joyita. 💎📈🛠️
+¿Quieres que te ayude a convertir el script de auditoría en un endpoint protegido para que puedas ejecutarlo desde el panel de administración?
