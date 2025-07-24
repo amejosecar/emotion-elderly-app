@@ -26,11 +26,11 @@ type Emotion = {
 };
 
 const emotionColors: Record<string, string> = {
-  Tristeza: "#5DADE2", // Azul
-  Alegría: "#F7DC6F", // Amarillo
-  Miedo: "#A569BD", // Morado
-  Enojo: "#E74C3C", // Rojo
-  Desagrado: "#58D68D", // Verde
+  Tristeza: "#5DADE2",
+  Alegría: "#F7DC6F",
+  Miedo: "#A569BD",
+  Enojo: "#E74C3C",
+  Desagrado: "#58D68D",
 };
 
 type Props = {
@@ -39,6 +39,8 @@ type Props = {
 };
 
 const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
+  console.log("🎨 Emotions recibidas en EmotionChart:", emotions);
+
   if (!emotions || emotions.length === 0) {
     return <p>⚠️ No se detectaron emociones en este audio.</p>;
   }

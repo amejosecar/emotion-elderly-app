@@ -1,152 +1,204 @@
+en console
+Failed to load resource: the server responded with a status of 500 (Internal Server Error)
 
-(.venv) PS C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app> cd backend
-(.venv) PS C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend> uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+***
+http://localhost:5173/
+
+[plugin:vite:import-analysis] Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+4  |  import App from "./App.tsx";
+5  |  import { BrowserRouter } from "react-router-dom";
+6  |  import "./index.css";
+   |          ^
+7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
+    at TransformPluginContext._formatLog (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31470:43)
+    at TransformPluginContext.error (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31467:14)
+    at normalizeUrl (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30010:18)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30068:32
+    at async Promise.all (index 5)
+    at async TransformPluginContext.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30036:4)
+    at async EnvironmentPluginContainer.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31284:14)
+    at async loadAndTransform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:26454:26)
+Click outside, press Esc key, or fix the code to dismiss.
+You can also disable this overlay by setting server.hmr.overlay to false in vite.config.ts.
+
+******
+terminal powershell Vite
+(.venv) PS C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend> npm run dev -- --force     
 >> 
-INFO:     Will watch for changes in these directories: ['C:\\americo\\ia_dema\\z-proyeto_final\\emotion-elderly-app\\backend']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [5684] using WatchFiles
-Device set to use cpu
-INFO:     Started server process [1620]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     127.0.0.1:52699 - "GET /docs HTTP/1.1" 200 OK
-INFO:     127.0.0.1:52699 - "GET /openapi.json HTTP/1.1" 500 Internal Server Error
-ERROR:    Exception in ASGI application
-  + Exception Group Traceback (most recent call last):
-  |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_utils.py", line 77, in collapse_excgroups
-  |     yield
-  |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 183, in __call__
-  |     async with anyio.create_task_group() as task_group:
-  |                ^^^^^^^^^^^^^^^^^^^^^^^^^
-  |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 772, in __aexit__
-  |     raise BaseExceptionGroup(
-  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
-  +-+---------------- 1 ----------------
-    | Traceback (most recent call last):
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
-    |     result = await app(  # type: ignore[func-returns-value]
-    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
-    |     return await self.app(scope, receive, send)
-    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
-    |     await super().__call__(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
-    |     raise exc
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
-    |     await self.app(scope, receive, _send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
-    |     await self.app(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 182, in __call__
-    |     with recv_stream, send_stream, collapse_excgroups():
-    |                                    ^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\Users\Dell\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
-    |     self.gen.throw(value)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_utils.py", line 83, in collapse_excgroups
-    |     raise exc
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 184, in __call__
-    |     response = await self.dispatch_func(request, call_next)
-    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\metrics.py", line 23, in metrics_middleware
-    |     response: Response = await call_next(request)
-    |                          ^^^^^^^^^^^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 159, in call_next
-    |     raise app_exc
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
-    |     await self.app(scope, receive_or_disconnect, send_no_error)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
-    |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
-    |     await self.middleware_stack(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 736, in app
-    |     await route.handle(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 290, in handle
-    |     await self.app(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 78, in app
-    |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    |     raise exc
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
-    |     await app(scope, receive, sender)
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 75, in app
-    |     response = await f(request)
-    |                ^^^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\fastapi\applications.py", line 1009, in openapi
-    |     return JSONResponse(self.openapi())
-    |                         ^^^^^^^^^^^^^^
-    |   File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\main.py", line 45, in custom_openapi
-    |     "type": SecuritySchemeType.HTTP,
-    |             ^^^^^^^^^^^^^^^^^^^^^^^
-    | AttributeError: type object 'SecuritySchemeType' has no attribute 'HTTP'
-    +------------------------------------
+npm warn using --force Recommended protections disabled.
 
-During handling of the above exception, another exception occurred:
+> frontend@0.0.0 dev
+> vite
 
-Traceback (most recent call last):
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 409, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\fastapi\applications.py", line 1054, in __call__
-    await super().__call__(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\applications.py", line 113, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\errors.py", line 186, in __call__
-    raise exc
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\cors.py", line 85, in __call__
-    await self.app(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 182, in __call__
-    with recv_stream, send_stream, collapse_excgroups():
-                                   ^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Dell\AppData\Local\Programs\Python\Python312\Lib\contextlib.py", line 158, in __exit__
-    self.gen.throw(value)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_utils.py", line 83, in collapse_excgroups
-    raise exc
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 184, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\core\metrics.py", line 23, in metrics_middleware
-    response: Response = await call_next(request)
-                         ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 159, in call_next
-    raise app_exc
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\base.py", line 144, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 716, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 736, in app
-    await route.handle(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 290, in handle
-    await self.app(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 78, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\starlette\routing.py", line 75, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.venv\Lib\site-packages\fastapi\applications.py", line 1009, in openapi
-    return JSONResponse(self.openapi())
-                        ^^^^^^^^^^^^^^
-  File "C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\main.py", line 45, in custom_openapi
-    "type": SecuritySchemeType.HTTP,
-            ^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: type object 'SecuritySchemeType' has no attribute 'HTTP'
+
+npm warn using --force Recommended protections disabled.
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.0.5  ready in 330 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://172.16.10.1:5173/
+  ➜  Network: http://192.168.8.126:5173/
+  ➜  Network: http://192.168.56.1:5173/
+  ➜  Network: http://172.24.160.1:5173/
+  ➜  press h + enter to show help
+10:59:30 [vite] (client) page reload src/main.tsx
+10:59:31 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
+10:59:31 [vite] Internal server error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+      at TransformPluginContext._formatLog (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31470:43)
+      at TransformPluginContext.error (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31467:14)
+      at normalizeUrl (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30010:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30068:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30036:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31284:14)
+      at async loadAndTransform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:26454:26)    
+      at async viteTransformMiddleware (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:27539:20)
+10:59:31 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+10:59:31 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, { (x2)   
+10:59:58 [vite] (client) hmr update /src/pages/Login.tsx
+10:59:58 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
+10:59:59 [vite] Internal server error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+      at TransformPluginContext._formatLog (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31470:43)
+      at TransformPluginContext.error (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31467:14)
+      at normalizeUrl (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30010:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30068:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30036:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31284:14)
+      at async loadAndTransform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:26454:26)    
+      at async viteTransformMiddleware (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:27539:20)
+10:59:59 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+npm warn using --force Recommended protections disabled.
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v7.0.5  ready in 642 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://172.16.10.1:5173/
+  ➜  Network: http://192.168.8.126:5173/
+  ➜  Network: http://192.168.56.1:5173/
+  ➜  Network: http://172.24.160.1:5173/
+  ➜  press h + enter to show help
+11:05:39 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {
+11:05:40 [vite] Internal server error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+      at TransformPluginContext._formatLog (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31470:43)
+      at TransformPluginContext.error (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31467:14)
+      at normalizeUrl (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30010:18)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30068:32
+      at async Promise.all (index 5)
+      at async TransformPluginContext.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:30036:4)
+      at async EnvironmentPluginContainer.transform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:31284:14)
+      at async loadAndTransform (file:///C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/node_modules/vite/dist/node/chunks/dep-Bg4HVnP5.js:26454:26)    
+11:05:40 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, {        
+11:05:40 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, { (x2)   
+11:06:25 [vite] Pre-transform error: Failed to resolve import "./index.css" from "src/main.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: C:/americo/ia_dema/z-proyeto_final/emotion-elderly-app/frontend/src/main.tsx:5:7
+  4  |  import App from "./App.tsx";
+  5  |  import { BrowserRouter } from "react-router-dom";
+  6  |  import "./index.css";
+     |          ^
+  7  |  ReactDOM.createRoot(document.getElementById("root")).render(
+  8  |    /* @__PURE__ */ jsxDEV(React.StrictMode, { children: /* @__PURE__ */ jsxDEV(BrowserRouter, { children: /* @__PURE__ */ jsxDEV(App, {}, void 0, false, { (x3)   
+http://localhost:5173/

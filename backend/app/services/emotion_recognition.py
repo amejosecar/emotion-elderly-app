@@ -7,6 +7,23 @@ from pathlib import Path
 import soundfile as sf
 import numpy as np
 
+# Diccionario de mapeo de etiquetas
+label_map = {
+    "LABEL_0": "Alegría",
+    "LABEL_1": "Tristeza",
+    "LABEL_2": "Miedo",
+    "LABEL_3": "Enojo",
+    "LABEL_4": "Desagrado",
+    "LABEL_5": "Sorpresa",
+    "LABEL_6": "Confusión",
+    "LABEL_7": "Calma",
+    "LABEL_8": "Ansiedad",
+    "LABEL_9": "Tristeza",
+    "LABEL_10": "Alegría",
+    "LABEL_11": "Miedo",
+    "LABEL_12": "Enojo",
+}
+
 # Cargamos el pipeline una sola vez
 try:
     emotion_pipeline = pipeline(
@@ -21,6 +38,7 @@ def recognize_emotions(file_path: str) -> List[Dict]:
     """
     Ejecuta el modelo de SER sobre el archivo de audio,
     asegurando que la señal sea mono.
+    Devuelve etiquetas legibles.
     """
     if emotion_pipeline is None:
         raise RuntimeError("Pipeline no inicializado")
@@ -35,4 +53,13 @@ def recognize_emotions(file_path: str) -> List[Dict]:
     if data.ndim > 1:
         data = np.mean(data, axis=1)
 
-    return emotion_pipeline(data, sampling_rate=sr)
+    raw_results = emotion_pipeline(data, sampling_rate=sr)
+
+    # Traducir etiquetas antes de devolver
+    return [
+        {
+            "label": label_map.get(r["label"], r["label"]),
+            "score": r["score"]
+        }
+        for r in raw_results
+    ]

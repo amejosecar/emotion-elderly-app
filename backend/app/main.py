@@ -8,8 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-from fastapi.openapi.models import SecuritySchemeType
 from fastapi.openapi.utils import get_openapi
 
 from app.core.security import get_current_user, get_current_user_optional
@@ -21,7 +19,7 @@ from app.api.routers import auth, users, audios, analyze, alerts
 # 🔧 Configurar logging
 configure_logging()
 
-# 🔐 Crear instancia de FastAPI con metadatos
+# 🔐 Crear instancia de FastAPI
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -42,7 +40,7 @@ def custom_openapi():
     )
     openapi_schema["components"]["securitySchemes"] = {
         "BearerAuth": {
-            "type": "http",  # ← CORREGIDO
+            "type": "http",  # ← CORREGIDO: antes era SecuritySchemeType.HTTP
             "scheme": "bearer",
             "bearerFormat": "JWT"
         }
@@ -52,7 +50,6 @@ def custom_openapi():
             method["security"] = [{"BearerAuth": []}]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
-
 
 app.openapi = custom_openapi
 
@@ -77,6 +74,9 @@ templates = Jinja2Templates(directory="app/templates")
 @app.get("/", tags=["root"])
 async def index(request: Request, user=Depends(get_current_user_optional)):
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
+
+# 🧾 Templates
+templates = Jinja2Templates(directory="app/templates")
 
 # 🔓 Logout
 @app.get("/logout", tags=["auth"])

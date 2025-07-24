@@ -1,10 +1,10 @@
 //src/components/layout/Navbar.tsx
 // 📄 src/components/layout/Navbar.tsx
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import './Navbar.css';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import "./Navbar.css";
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/login"); // ✅ redirige a login después de cerrar sesión
   };
 
   return (
@@ -28,7 +28,7 @@ const Navbar: React.FC = () => {
 
           {/* 👤 Info del usuario logueado */}
           {user && (
-            <span style={{ marginLeft: 'auto' }}>
+            <span style={{ marginLeft: "auto" }}>
               👤 <strong>{user.email}</strong>
             </span>
           )}

@@ -8,12 +8,18 @@ const api = axios.create({
 });
 
 // Interceptor que añade el Bearer token si existe
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("access_token");
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    console.error("❌ Error en interceptor de axios:", error);
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 export default api;

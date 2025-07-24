@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import api from "../api/axios";
-import EmotionChart from "../components/EmotionChart";
+import EmotionChart from "../components/EmotionChart"; // ✅ Importación correcta
 import "../styles/spinner.css";
 
 type Emotion = {
@@ -33,7 +33,7 @@ const Analyze: React.FC = () => {
       api
         .get("/analyze")
         .then((res) => {
-          console.log("🔍 Resultado del análisis:", res.data);
+          console.log("📊 Emociones recibidas en Analyze:", res.data.emotions);
           setResult({ emotions: res.data.emotions, alerts: res.data.alerts });
           setLoading(false);
         })
@@ -56,7 +56,7 @@ const Analyze: React.FC = () => {
         </div>
       ) : result ? (
         <>
-          {result.emotions.length > 0 ? (
+          {Array.isArray(result.emotions) && result.emotions.length > 0 ? (
             <EmotionChart
               emotions={result.emotions}
               audioId={result.emotions[0]?.id || 0}
@@ -66,9 +66,7 @@ const Analyze: React.FC = () => {
           )}
 
           <h2 style={{ marginTop: "2rem" }}>🚨 Alertas</h2>
-          {result.alerts.length === 0 ? (
-            <p>Sin alertas generadas.</p>
-          ) : (
+          {Array.isArray(result.alerts) && result.alerts.length > 0 ? (
             <ul>
               {result.alerts.map((a) => (
                 <li key={a.id}>
@@ -77,6 +75,8 @@ const Analyze: React.FC = () => {
                 </li>
               ))}
             </ul>
+          ) : (
+            <p>Sin alertas generadas.</p>
           )}
         </>
       ) : (

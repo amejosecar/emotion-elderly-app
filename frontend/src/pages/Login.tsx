@@ -1,92 +1,78 @@
 // src/pages/Login.tsx
 import React, { useState } from "react";
+import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
-import { useAuth } from "../contexts/AuthContext";
-import axios from "axios";
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
+    setStatus("");
 
     try {
-      // FastAPI OAuth2PasswordRequestForm espera form-urlencoded
-      const form = new URLSearchParams();
-      form.append("username", email);
-      form.append("password", password);
+      const formData = new URLSearchParams();
+      formData.append("username", username);
+      formData.append("password", password);
 
-      const res = await api.post("/auth/login", form, {
+      const response = await axios.post("/auth/login", formData, {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
       });
 
-      // Si tu backend devuelve { access_token }
-      const token = res.data.access_token;
-      login(token);
-      navigate("/dashboard");
-    } catch (err: any) {
-      if (axios.isAxiosError(err)) {
-        if (err.response?.status === 422 && Array.isArray(err.response.data)) {
-          // validación de Pydantic, convierte a texto
-          const msgs = err.response.data.map(
-            (v: any) => `${v.loc.join(".")}: ${v.msg}`
-          );
-          setError(msgs.join(" • "));
-        } else {
-          // error estándar con detalle
-          setError(
-            (err.response?.data as any)?.detail || "Error al iniciar sesión"
-          );
-        }
-      } else {
-        setError("Error al iniciar sesión");
+      console.log("✅ Login exitoso:", response.data);
+
+      const token = response.data.access_token;
+      localStorage.setItem("access_token", token);
+      setStatus("✅ Autenticación exitosa");
+
+      console.log("🔁 Redirigiendo a /analyze");
+      navigate("/loading"); // ✅ redirige a pantalla de carga
+    } catch (error: any) {
+      console.error("❌ Error en login:", error);
+      if (error.response) {
+        console.error("🔍 Detalle del error:", error.response.data);
       }
+      setStatus("❌ Usuario o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h1>Iniciar Sesión</h1>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email
+    <main>
+      <h1>🔐 Iniciar sesión</h1>
+      <form onSubmit={handleLogin}>
+        <div>
+          <label>Usuario:</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
           />
-        </label>
-
-        <label>
-          Contraseña
+        </div>
+        <div>
+          <label>Contraseña:</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </label>
-
+        </div>
         <button type="submit" disabled={loading}>
-          {loading ? "Cargando…" : "Entrar"}
+          {loading ? "Cargando..." : "Enviar"}
         </button>
       </form>
-    </div>
+      {status && <p>{status}</p>}
+    </main>
   );
 };
 
