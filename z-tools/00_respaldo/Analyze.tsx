@@ -1,5 +1,6 @@
 //C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
 //Analyze.tsx
+
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/axios";
@@ -62,7 +63,6 @@ const Analyze: React.FC = () => {
 
       {loading ? (
         <div style={{ textAlign: "center", marginTop: "2rem" }}>
-          <div className="spinner" style={{ marginBottom: "1rem" }} />
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${progress}%` }} />
           </div>

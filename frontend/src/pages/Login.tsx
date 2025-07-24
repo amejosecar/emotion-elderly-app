@@ -1,78 +1,126 @@
 // src/pages/Login.tsx
 import React, { useState } from "react";
-import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../api/axios";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import Container from "react-bootstrap/Container";
+import Alert from "react-bootstrap/Alert";
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState("");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [validated, setValidated] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
+    const form = e.currentTarget;
+
+    if (!form.checkValidity()) {
+      e.stopPropagation();
+      setValidated(true);
+      return;
+    }
+
     setStatus("");
+    setValidated(true);
 
     try {
-      const formData = new URLSearchParams();
-      formData.append("username", username);
-      formData.append("password", password);
+      const payload = new URLSearchParams();
+      payload.append("username", email);
+      payload.append("password", password);
 
-      const response = await axios.post("/auth/login", formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+      const res = await api.post("/auth/login", payload.toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
 
-      console.log("✅ Login exitoso:", response.data);
-
-      const token = response.data.access_token;
-      localStorage.setItem("access_token", token);
-      setStatus("✅ Autenticación exitosa");
-
-      console.log("🔁 Redirigiendo a /analyze");
-      navigate("/loading"); // ✅ redirige a pantalla de carga
-    } catch (error: any) {
-      console.error("❌ Error en login:", error);
-      if (error.response) {
-        console.error("🔍 Detalle del error:", error.response.data);
-      }
-      setStatus("❌ Usuario o contraseña incorrectos");
-    } finally {
-      setLoading(false);
+      login(res.data.access_token);
+      navigate("/loading");
+    } catch (err: any) {
+      setStatus("❌ Credenciales inválidas o error de conexión");
     }
   };
 
   return (
-    <main>
-      <h1>🔐 Iniciar sesión</h1>
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>Usuario:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Contraseña:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? "Cargando..." : "Enviar"}
-        </button>
-      </form>
-      {status && <p>{status}</p>}
-    </main>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f0f2f5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "'Inter', sans-serif",
+      }}
+    >
+      <Container
+        style={{
+          maxWidth: "420px",
+          padding: "2rem",
+          backgroundColor: "#fff",
+          borderRadius: "10px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        }}
+      >
+        <h2 className="mb-4 text-center" style={{ fontWeight: 600 }}>
+          Iniciar Sesión
+        </h2>
+
+        {status && <Alert variant="danger">{status}</Alert>}
+
+        <Form noValidate validated={validated} onSubmit={handleSubmit}>
+          <Form.Group controlId="formBasicEmail" className="mb-4">
+            <Form.Label className="mb-2" style={{ fontWeight: 500 }}>
+              Correo electrónico
+            </Form.Label>
+            <Form.Control
+              type="email"
+              placeholder="Ingresa tu correo"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Form.Control.Feedback type="invalid">
+              Por favor ingresa un correo válido.
+            </Form.Control.Feedback>
+          </Form.Group>
+
+          <Form.Group controlId="formBasicPassword" className="mb-4">
+            <Form.Label className="mb-2" style={{ fontWeight: 500 }}>
+              Contraseña
+            </Form.Label>
+            <Form.Control
+              type="password"
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Form.Control.Feedback type="invalid">
+              La contraseña es obligatoria.
+            </Form.Control.Feedback>
+          </Form.Group>
+
+          <Form.Group controlId="formBasicCheckbox" className="mb-3">
+            <Form.Check type="checkbox" label="Recordarme" />
+          </Form.Group>
+
+          <div className="mt-3">
+            <Button
+              variant="primary"
+              type="submit"
+              className="w-100"
+              style={{ fontWeight: 500 }}
+            >
+              Acceder
+            </Button>
+          </div>
+        </Form>
+      </Container>
+    </div>
   );
 };
 

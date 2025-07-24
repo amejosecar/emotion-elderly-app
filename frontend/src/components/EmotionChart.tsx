@@ -39,8 +39,6 @@ type Props = {
 };
 
 const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
-  console.log("🎨 Emotions recibidas en EmotionChart:", emotions);
-
   if (!emotions || emotions.length === 0) {
     return <p>⚠️ No se detectaron emociones en este audio.</p>;
   }
@@ -91,12 +89,16 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
         },
       },
     },
+    responsive: true,
+    maintainAspectRatio: false,
   };
 
   return (
     <section>
       <h2>🎭 Emociones detectadas en el audio #{audioId}</h2>
-      <Bar data={data} options={options} />
+      <div style={{ maxWidth: "600px", margin: "0 auto", height: "300px" }}>
+        <Bar data={data} options={options} />
+      </div>
 
       <div style={{ marginTop: "1rem" }}>
         <h3>🎨 Leyenda de emociones</h3>
