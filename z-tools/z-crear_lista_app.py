@@ -7,16 +7,11 @@ from datetime import datetime
 # Lista de rutas de los archivos a incluir
 paths_to_process = [
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\package-lock.json",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\README.md",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env.example",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic.ini",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\env.py",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\README",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\script.py.mako",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\versions\0df35657cc1b_initial_schema.py",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\alembic\versions\307613368dfe_initial_schema.py",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\database.py",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\main.py",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models.py",
@@ -58,13 +53,9 @@ r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.env.example",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\.gitignore",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\eslint.config.js",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\index.html",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\package-lock.json",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\package.json",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\README.md",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.app.json",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.json",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\tsconfig.node.json",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\vite.config.ts",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\public\index.html",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\App.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\index.tsx",
@@ -101,6 +92,7 @@ r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\pro
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep",
+r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\types\index.ts",
 ]
 
 def write_files_to_txt(file_paths, output_file):
