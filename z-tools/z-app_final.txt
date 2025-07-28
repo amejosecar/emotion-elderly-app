@@ -1,4 +1,4 @@
-Creado el 2025-07-24 14:50:13
+Creado el 2025-07-28 10:57:01
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore
@@ -5879,6 +5879,9 @@ import App from "./App";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+
+// ✅ Importa los estilos de Bootstrap
+import "bootstrap/dist/css/bootstrap.min.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

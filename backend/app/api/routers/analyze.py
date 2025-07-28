@@ -1,7 +1,4 @@
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze.py
-# analyze.py
 # backend/app/api/routers/analyze.py
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 import logging
@@ -14,10 +11,14 @@ from app.models import User, Audio, Alert, Emotion
 from app.schemas.emotion import AnalysisResult, EmotionRead
 from app.schemas.alert import AlertRead
 from app.services.emotion_recognition import recognize_emotions
+from app.core.config import settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-ALERT_THRESHOLD = 0.8
+#ALERT_THRESHOLD = 0.8
+# ALERT_THRESHOLD ahora viene de .env
+ALERT_THRESHOLD = settings.ALERT_THRESHOLD
+
 
 # 🔍 Obtener resultados de análisis de un audio
 @router.get("/", response_model=AnalysisResult, summary="Obtener resultados de análisis")
@@ -52,12 +53,13 @@ def analyze_audio(
         raise HTTPException(status_code=404, detail="Audio no encontrado")
 
     path = Path(audio.file_path).expanduser().resolve()
-    logger.info(f"Analizando audio en: {path}")
+    logger.info(f"📥 Analizando audio en: {path}")
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Audio no existe: {path}")
 
     try:
         results = recognize_emotions(str(path))
+        logger.info(f"🔍 Resultados del modelo: {results}")
     except FileNotFoundError as e:
         logger.error(str(e))
         raise HTTPException(status_code=404, detail=str(e))
@@ -75,6 +77,7 @@ def analyze_audio(
         db.commit()
         db.refresh(emo)
         saved_emotions.append(emo)
+        logger.info(f"✅ Emoción guardada: {emo.label} ({emo.confidence:.2f})")
 
         if r["score"] >= ALERT_THRESHOLD:
             msg = f"Detected {r['label']} with confidence {r['score']:.2f}"
@@ -83,6 +86,7 @@ def analyze_audio(
             db.commit()
             db.refresh(al)
             generated_alerts.append(al)
+            logger.info(f"🚨 Alerta generada: {msg}")
 
     return AnalysisResult(
         audio_id=audio.id,

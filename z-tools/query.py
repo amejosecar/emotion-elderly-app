@@ -4,8 +4,8 @@ import sqlite3
 db_path = r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app.db"
 
 # Nombre de la tabla que quieres consultar
-#table_name = "audios"  # Reemplaza esto con el nombre real
-table_name = "emotions"  # Reemplaza esto con el nombre real
+table_name = "audios"  # Reemplaza esto con el nombre real
+#table_name = "emotions"  # Reemplaza esto con el nombre real
 
 # Conexión a la base de datos
 conn = sqlite3.connect(db_path)

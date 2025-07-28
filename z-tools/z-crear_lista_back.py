@@ -7,7 +7,7 @@ from datetime import datetime
 # Lista de rutas de los archivos a incluir
 paths_to_process = [
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore",
-r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\package-lock.json",
+#r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\package-lock.json",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\README.md",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env.example",

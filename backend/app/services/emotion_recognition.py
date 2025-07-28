@@ -55,6 +55,9 @@ def recognize_emotions(file_path: str) -> List[Dict]:
 
     raw_results = emotion_pipeline(data, sampling_rate=sr)
 
+    # 🔍 Mostrar resultados crudos en consola
+    print("🔍 Resultados del modelo:", raw_results)
+
     # Traducir etiquetas antes de devolver
     return [
         {

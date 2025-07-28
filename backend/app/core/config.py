@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # Ruta local de almacenamiento de audios
     STORAGE_PATH: str = "./sonido/audios"
 
+    # Umbral mínimo para alertas
+    ALERT_THRESHOLD: float = Field(0.1, env="ALERT_THRESHOLD")
+
     # Orígenes permitidos para CORS (puede venir como CSV en .env)
     CORS_ORIGINS: Union[str, List[str]] = Field(
         default_factory=lambda: ["http://localhost:3000"]

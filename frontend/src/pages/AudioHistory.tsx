@@ -29,12 +29,15 @@ const AudioHistory: React.FC = () => {
   useEffect(() => {
     const fetchAudios = async () => {
       try {
-        const audioRes = await api.get("/audios");
-        const emotionRes = await api.get("/analyze/emotions");
+        const [audioRes, emotionRes] = await Promise.all([
+          api.get("/audios"),
+          api.get("/analyze/emotions"),
+        ]);
+
         setAudios(audioRes.data);
         setEmotions(emotionRes.data);
       } catch (err) {
-        console.error("Error al cargar audios o emociones");
+        console.error("Error al cargar audios o emociones", err);
       } finally {
         setLoading(false);
       }
@@ -45,16 +48,25 @@ const AudioHistory: React.FC = () => {
   const isAnalyzed = (audioId: number) =>
     emotions.some((e) => e.audio_id === audioId);
 
-  const handleAnalyze = (id: number) => {
-    navigate(`/analyze/${id}`);
+  // Nuevo: dispara el análisis POST y luego navega
+  const handleAnalyze = async (id: number) => {
+    setLoading(true);
+    try {
+      await api.post(`/analyze/?audio_id=${id}`);
+      navigate(`/analyze/${id}`);
+    } catch (err) {
+      console.error("Error al iniciar análisis:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleView = (id: number) => {
     navigate(`/analyze/${id}`);
   };
 
-  const audiosAnalizados = audios.filter((a) => isAnalyzed(a.id));
   const audiosNoAnalizados = audios.filter((a) => !isAnalyzed(a.id));
+  const audiosAnalizados = audios.filter((a) => isAnalyzed(a.id));
 
   return (
     <Container style={{ marginTop: "2rem" }}>
@@ -83,6 +95,7 @@ const AudioHistory: React.FC = () => {
                   <Button
                     variant="success"
                     onClick={() => handleAnalyze(audio.id)}
+                    disabled={loading}
                   >
                     Analizar
                   </Button>
