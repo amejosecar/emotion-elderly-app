@@ -1,4 +1,4 @@
-Creado el 2025-07-28 13:17:57
+Creado el 2025-07-29 14:42:48
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore
@@ -200,45 +200,51 @@ export default tseslint.config([
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\App.tsx
 //C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\App.tsx
-//frontend\src\App.tsx
+// frontend/src/App.tsx
+
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Auth from "./pages/Auth";
-import Loading from "./pages/Loading"; // ✅ pantalla de carga
+import Loading from "./pages/Loading";
 
 import Dashboard from "./pages/Dashboard";
 import AudioHistory from "./pages/AudioHistory";
 import Alerts from "./pages/Alerts";
 import Analyze from "./pages/Analyze";
 import UploadAudio from "./pages/UploadAudio";
+import UploadMultipleAudios from "./pages/UploadMultipleAudios"; // ✅ nuevo componente
 
 import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/layout/Layout";
 
 const App: React.FC = () => (
   <Routes>
-    {/* Rutas públicas */}
+    {/* 🌐 Rutas públicas */}
     <Route path="/" element={<Navigate to="/login" replace />} />
     <Route path="/login" element={<Login />} />
     <Route path="/signup" element={<Auth mode="signup" />} />
     <Route path="/loading" element={<Loading />} />
 
-    {/* Rutas privadas */}
+    {/* 🔐 Rutas privadas */}
     <Route element={<PrivateRoute />}>
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/audios" element={<AudioHistory />} />
         <Route path="/alerts" element={<Alerts />} />
         <Route path="/analyze" element={<Analyze />} />
-        <Route path="/analyze/:audioId" element={<Analyze />} />{" "}
-        {/* ✅ nueva ruta dinámica */}
+        <Route path="/analyze/:audioId" element={<Analyze />} />
         <Route path="/upload" element={<UploadAudio />} />
+        <Route
+          path="/upload-multiple"
+          element={<UploadMultipleAudios />}
+        />{" "}
+        {/* ✅ nueva ruta */}
       </Route>
     </Route>
 
-    {/* Catch-all */}
+    {/* 🧭 Catch-all */}
     <Route path="*" element={<Navigate to="/login" replace />} />
   </Routes>
 );
@@ -299,14 +305,18 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\api\axios.ts
 // C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\api\axios.ts
 // frontend/src/api/axios.ts
-// src/api/axios.ts
+
 import axios from "axios";
 
+// Crear instancia de Axios con configuración base
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+  headers: {
+    "Content-Type": "multipart/form-data", // Ideal para subir archivos
+  },
 });
 
-// Interceptor que añade el Bearer token si existe
+// Interceptor para añadir el token Bearer si existe
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -330,6 +340,7 @@ export default api;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\EmotionChart.tsx
+// frontend/src/components/EmotionChart.tsx
 // frontend/src/components/EmotionChart.tsx
 import React from "react";
 import { Bar } from "react-chartjs-2";
@@ -359,10 +370,21 @@ type Emotion = {
 
 const emotionColors: Record<string, string> = {
   Tristeza: "#5DADE2",
-  Alegría: "#F7DC6F",
-  Miedo: "#A569BD",
-  Enojo: "#E74C3C",
-  Desagrado: "#58D68D",
+  Alegría: "#FFD700",
+  Miedo: "#4B0082",
+  Enojo: "#E63946",
+  Desagrado: "#9ACD32",
+  Sorpresa: "#FFA500",
+  Neutral: "#95A5A6",
+  Confianza: "#008080",
+  Vergüenza: "#8E44AD",
+  Culpa: "#8B4513",
+  Amor: "#E91E63",
+  Orgullo: "#FFB400",
+  Interés: "#1ABC9C",
+  Calma: "#AED6F1",
+  Confusión: "#7F8C8D",
+  Ansiedad: "#34495E",
 };
 
 type Props = {
@@ -371,54 +393,42 @@ type Props = {
 };
 
 const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
-  if (!emotions || emotions.length === 0) {
+  if (!emotions.length) {
     return <p>⚠️ No se detectaron emociones en este audio.</p>;
   }
 
-  const validEmotions = emotions.filter(
+  const valid = emotions.filter(
     (e) => typeof e.label === "string" && typeof e.confidence === "number"
   );
-
-  if (validEmotions.length === 0) {
+  if (!valid.length) {
     return <p>⚠️ Los datos de emociones están incompletos o corruptos.</p>;
   }
 
   const data = {
-    labels: validEmotions.map((e) => e.label),
+    labels: valid.map((e) => e.label),
     datasets: [
       {
         label: "Confianza (%)",
-        data: validEmotions.map((e) => e.confidence * 100),
-        backgroundColor: validEmotions.map(
-          (e) => emotionColors[e.label] || "#ccc"
-        ),
+        data: valid.map((e) => e.confidence * 100),
+        backgroundColor: valid.map((e) => emotionColors[e.label] || "#ccc"),
         datalabels: {
           anchor: "end",
           align: "top",
-          formatter: (value: number) => `${value.toFixed(1)}%`,
+          formatter: (v: number) => `${v.toFixed(1)}%`,
           color: "#333",
-          font: {
-            weight: "bold",
-          },
+          font: { weight: "bold" },
         },
       },
     ],
   };
 
   const options = {
-    plugins: {
-      legend: { display: false },
-      datalabels: {
-        display: true,
-      },
-    },
+    plugins: { legend: { display: false }, datalabels: { display: true } },
     scales: {
       y: {
         beginAtZero: true,
         max: 100,
-        ticks: {
-          callback: (value: number) => `${value}%`,
-        },
+        ticks: { callback: (v: number) => `${v}%` },
       },
     },
     responsive: true,
@@ -428,35 +438,48 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
   return (
     <section>
       <h2>🎭 Emociones detectadas en el audio #{audioId}</h2>
-      <div style={{ maxWidth: "600px", margin: "0 auto", height: "300px" }}>
-        <Bar data={data} options={options} />
-      </div>
 
-      <div style={{ marginTop: "1rem" }}>
-        <h3>🎨 Leyenda de emociones</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {Object.entries(emotionColors).map(([label, color]) => (
-            <li
-              key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "4px",
-              }}
-            >
-              <div
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "2rem",
+          marginTop: "1rem",
+        }}
+      >
+        {/* Gráfico a la izquierda */}
+        <div style={{ flex: 1, minWidth: "300px", height: "300px" }}>
+          <Bar data={data} options={options} />
+        </div>
+
+        {/* Leyenda a la derecha */}
+        <aside style={{ minWidth: "160px" }}>
+          <h3>🎨 Leyenda</h3>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {Object.entries(emotionColors).map(([label, color]) => (
+              <li
+                key={label}
                 style={{
-                  width: "16px",
-                  height: "16px",
-                  backgroundColor: color,
-                  marginRight: "8px",
-                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "4px",
                 }}
-              />
-              {label}
-            </li>
-          ))}
-        </ul>
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 16,
+                    height: 16,
+                    backgroundColor: color,
+                    borderRadius: 4,
+                    marginRight: 8,
+                  }}
+                />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
     </section>
   );
@@ -583,8 +606,8 @@ const Navbar: React.FC = () => {
           <Link to="/audios">Audios</Link>
           <Link to="/alerts">Alertas</Link>
           <Link to="/upload">Subir Audio</Link>
-
-          {/* 👤 Info del usuario logueado */}
+          <Link to="/upload-multiple">Subir Múltiples Audios</Link>{" "}
+          {/* ✅ nuevo enlace */}
           {user && (
             <span style={{ marginLeft: "auto" }}>
               👤 <strong>{user.email}</strong>
@@ -761,124 +784,193 @@ export const useAuth = () => {
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Alerts.tsx
 // frontend/src/pages/Alerts.tsx
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Audio, AnalysisResult } from "../types";
+// src/pages/Alerts.tsx
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Row,
+  Col,
+  ListGroup,
+  Button,
+  Spinner,
+  Alert as BSAlert,
+  Card,
+} from "react-bootstrap";
+import api from "../api/axios";
+import type { Audio, AnalysisResult } from "../types";
+import EmotionChart from "../components/EmotionChart";
 
 const Alerts: React.FC = () => {
   const [audios, setAudios] = useState<Audio[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [selectedAudio, setSelectedAudio] = useState<number | null>(null);
+  const [viewType, setViewType] = useState<"alert" | "chart">("alert");
 
-  // 1) Cargar historial de audios
+  // 1) Carga inicial de audios con análisis disponible
   useEffect(() => {
-    axios
-      .get<Audio[]>("http://localhost:8000/audios", { withCredentials: true })
-      .then((res) => setAudios(res.data))
-      .catch(() => setError("No se pudieron cargar los audios"));
+    (async () => {
+      setLoadingList(true);
+      try {
+        const [audiosRes, emoRes] = await Promise.all([
+          api.get<Audio[]>("/audios"),
+          api.get<{ audio_id: number }[]>("/analyze/emotions"),
+        ]);
+        const analyzedIds = new Set(emoRes.data.map((e) => e.audio_id));
+        setAudios(audiosRes.data.filter((a) => analyzedIds.has(a.id)));
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron cargar los audios.");
+      } finally {
+        setLoadingList(false);
+      }
+    })();
   }, []);
 
-  // 2) Función para pedir análisis de un audio
-  const handleAnalyze = async (audioId: number) => {
-    setError("");
-    setLoading(true);
-    setAnalysis(null);
+  // 2) Función genérica para traer el análisis y fijar modo de vista
+  const fetchAnalysis = useCallback(
+    async (audioId: number, mode: "alert" | "chart") => {
+      setError("");
+      setLoadingAnalysis(true);
+      setSelectedAudio(audioId);
+      setViewType(mode);
+      setAnalysis(null);
 
-    try {
-      const res = await axios.get<AnalysisResult>(
-        `http://localhost:8000/analyze?audio_id=${audioId}`,
-        { withCredentials: true }
-      );
-      setAnalysis(res.data);
-    } catch {
-      setError("Error al obtener el análisis");
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const res = await api.get<AnalysisResult>(
+          `/analyze?audio_id=${audioId}`
+        );
+        setAnalysis(res.data);
+      } catch (err) {
+        console.error(err);
+        setError("Error al obtener el análisis.");
+      } finally {
+        setLoadingAnalysis(false);
+      }
+    },
+    []
+  );
 
-  // 3) Render del informe según requisitos
-  const renderReport = () => {
+  // 3) Render del bloque de alerta
+  const renderAlertReport = () => {
     if (!analysis) return null;
 
-    // Ordenar emociones y quedarnos con las 4 críticas
-    const top4 = [...analysis.emotions]
+    const { audio_id, emotions, alerts } = analysis;
+    const top4 = [...emotions]
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 4);
 
-    // Agrupar niveles de urgencia
     const alto = top4.filter((e) => e.confidence >= 0.12);
     const medio = top4.filter(
       (e) => e.confidence >= 0.1 && e.confidence < 0.12
     );
     const bajo = top4.filter((e) => e.confidence >= 0.05 && e.confidence < 0.1);
-
-    // Timestamp de la primera alerta o ahora
-    const ts = analysis.alerts[0]?.created_at ?? new Date().toISOString();
+    const ts = alerts[0]?.created_at ?? new Date().toISOString();
 
     return (
-      <div style={{ marginTop: 20, padding: 16, border: "1px solid #ccc" }}>
-        <h2>Alerta para el asistente del adulto mayor</h2>
-        <p>
-          <strong>Momento de detección:</strong> {new Date(ts).toLocaleString()}
-        </p>
+      <Card className="p-3">
+        <Card.Title>Alerta para el asistente</Card.Title>
+        <Card.Text>
+          <strong>Audio #:</strong> {audio_id} <br />
+          <strong>Detección:</strong> {new Date(ts).toLocaleString()}
+        </Card.Text>
 
-        <h3>1. Resumen de emociones críticas</h3>
+        <h5>1. Emociones críticas</h5>
         <ul>
           {top4.map((e) => (
             <li key={e.id}>
-              {e.label} ({e.confidence.toFixed(2)})
+              {e.label}: {(e.confidence * 100).toFixed(1)}%
             </li>
           ))}
         </ul>
 
-        <h3>2. Nivel de urgencia</h3>
+        <h5>2. Nivel de urgencia</h5>
         <p>
-          <strong>Alto (≥ 0.12):</strong>{" "}
+          <strong>Alto (≥12%):</strong>{" "}
           {alto.map((e) => e.label).join(", ") || "—"}
         </p>
         <p>
-          <strong>Medio (0.10–0.12):</strong>{" "}
+          <strong>Medio (10–12%):</strong>{" "}
           {medio.map((e) => e.label).join(", ") || "—"}
         </p>
         <p>
-          <strong>Bajo (0.05–0.10):</strong>{" "}
+          <strong>Bajo (5–10%):</strong>{" "}
           {bajo.map((e) => e.label).join(", ") || "—"}
         </p>
 
-        <p>
-          La combinación de{" "}
-          {alto.length > 0
-            ? "emociones en alto nivel"
-            : "emociones moderadas/bajas"}{" "}
-          requiere acción inmediata.
+        <p className="mt-3">
+          {alto.length
+            ? "⚠️ Acción inmediata recomendada"
+            : "ℹ️ Monitoreo continuo"}
         </p>
-      </div>
+      </Card>
     );
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>🚨 Alertas</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="container py-4">
+      <Row>
+        {/* Columna izquierda: lista de audios */}
+        <Col md={4}>
+          <h2>🚨 Alertas</h2>
+          {error && <BSAlert variant="danger">{error}</BSAlert>}
 
-      <ul>
-        {audios.map((a) => (
-          <li key={a.id} style={{ marginBottom: 8 }}>
-            <span>{new Date(a.created_at).toLocaleString()}</span>
-            <button
-              style={{ marginLeft: 12 }}
-              onClick={() => handleAnalyze(a.id)}
-            >
-              Análisis
-            </button>
-          </li>
-        ))}
-      </ul>
+          {loadingList ? (
+            <Spinner animation="border" />
+          ) : (
+            <ListGroup>
+              {audios.map((a) => (
+                <ListGroup.Item
+                  key={a.id}
+                  active={a.id === selectedAudio}
+                  className="d-flex justify-content-between align-items-center"
+                >
+                  <small>{new Date(a.created_at).toLocaleString()}</small>
+                  <div>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => fetchAnalysis(a.id, "alert")}
+                      className="me-1"
+                    >
+                      Ver alerta
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="info"
+                      onClick={() => fetchAnalysis(a.id, "chart")}
+                    >
+                      Ver gráfico
+                    </Button>
+                  </div>
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          )}
+        </Col>
 
-      {loading && <p>Cargando análisis…</p>}
-      {renderReport()}
+        {/* Columna derecha: detalle */}
+        <Col md={8}>
+          {loadingAnalysis && (
+            <div className="text-center">
+              <Spinner animation="border" />
+            </div>
+          )}
+
+          {!loadingAnalysis &&
+            analysis &&
+            viewType === "alert" &&
+            renderAlertReport()}
+
+          {!loadingAnalysis && analysis && viewType === "chart" && (
+            <EmotionChart
+              emotions={analysis.emotions}
+              audioId={analysis.audio_id}
+            />
+          )}
+        </Col>
+      </Row>
     </div>
   );
 };
@@ -989,80 +1081,100 @@ export default Analyze;
 // # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
 // # AudioHistory.tsx
 
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// frontend/src/pages/AudioHistory.tsx
+
+import React, { useEffect, useState, useRef } from "react";
 import api from "../api/axios";
 import Table from "react-bootstrap/Table";
 import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Spinner from "react-bootstrap/Spinner";
+import ProgressBar from "react-bootstrap/ProgressBar";
 
-type Audio = {
-  id: number;
-  file_path: string;
-  created_at: string;
-};
+type Audio = { id: number; file_path: string; created_at: string };
+type Emotion = { audio_id: number };
 
-type Emotion = {
-  id: number;
-  audio_id: number;
-};
+interface JobInfo {
+  jobId: string;
+  progress: number;
+}
 
 const AudioHistory: React.FC = () => {
-  const navigate = useNavigate();
   const [audios, setAudios] = useState<Audio[]>([]);
   const [emotions, setEmotions] = useState<Emotion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<Record<number, JobInfo>>({});
+  const polling = useRef<Record<string, NodeJS.Timer>>({});
 
+  // Fetch inicial de audios y emociones
   useEffect(() => {
-    const fetchAudios = async () => {
+    (async () => {
       try {
-        const [audioRes, emotionRes] = await Promise.all([
-          api.get("/audios"),
-          api.get("/analyze/emotions"),
+        const [ar, er] = await Promise.all([
+          api.get<Audio[]>("/audios"),
+          api.get<Emotion[]>("/analyze/emotions"),
         ]);
-
-        setAudios(audioRes.data);
-        setEmotions(emotionRes.data);
-      } catch (err) {
-        console.error("Error al cargar audios o emociones", err);
+        setAudios(ar.data);
+        setEmotions(er.data);
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
-    };
-    fetchAudios();
+    })();
   }, []);
 
-  const isAnalyzed = (audioId: number) =>
-    emotions.some((e) => e.audio_id === audioId);
+  const isAnalyzed = (id: number) => emotions.some((e) => e.audio_id === id);
 
-  // Nuevo: dispara el análisis POST y luego navega
-  const handleAnalyze = async (id: number) => {
+  // Iniciar job y arrancar polling
+  const handleAnalyze = async (audio: Audio) => {
     setLoading(true);
     try {
-      await api.post(`/analyze/?audio_id=${id}`);
-      navigate(`/analyze/${id}`);
+      const res = await api.post<{ job_id: string }>("/analyze/start", null, {
+        params: { audio_id: audio.id },
+      });
+      const jobId = res.data.job_id;
+      setJobs((j) => ({ ...j, [audio.id]: { jobId, progress: 0 } }));
+
+      const timer = setInterval(async () => {
+        const st = await api.get<{
+          status: string;
+          progress: number;
+          audio_id: number;
+        }>("/analyze/status", { params: { job_id: jobId } });
+        setJobs((j) => ({
+          ...j,
+          [audio.id]: { jobId, progress: st.data.progress },
+        }));
+
+        if (st.data.status === "done" || st.data.status === "error") {
+          clearInterval(polling.current[jobId]);
+          delete polling.current[jobId];
+
+          const emoRes = await api.get<Emotion[]>("/analyze/emotions");
+          setEmotions(emoRes.data);
+
+          setJobs((j) => {
+            const c = { ...j };
+            delete c[audio.id];
+            return c;
+          });
+        }
+      }, 500);
+
+      polling.current[jobId] = timer;
     } catch (err) {
-      console.error("Error al iniciar análisis:", err);
+      console.error("Error iniciando job:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleView = (id: number) => {
-    navigate(`/analyze/${id}`);
-  };
-
-  const audiosNoAnalizados = audios.filter((a) => !isAnalyzed(a.id));
-  const audiosAnalizados = audios.filter((a) => isAnalyzed(a.id));
-
   return (
     <Container style={{ marginTop: "2rem" }}>
-      <h2 className="mb-4">🎧 Audios no analizados</h2>
+      <h2>🎧 Audios no analizados</h2>
       {loading ? (
-        <Spinner animation="border" />
-      ) : audiosNoAnalizados.length === 0 ? (
-        <p>No hay audios pendientes de análisis.</p>
+        <Spinner />
       ) : (
         <Table striped bordered hover>
           <thead>
@@ -1070,35 +1182,46 @@ const AudioHistory: React.FC = () => {
               <th>ID</th>
               <th>Archivo</th>
               <th>Fecha</th>
-              <th>Acción</th>
+              <th>Acción/Progreso</th>
             </tr>
           </thead>
           <tbody>
-            {audiosNoAnalizados.map((audio) => (
-              <tr key={audio.id}>
-                <td>{audio.id}</td>
-                <td>{audio.file_path.split("/").pop()}</td>
-                <td>{new Date(audio.created_at).toLocaleString()}</td>
-                <td>
-                  <Button
-                    variant="success"
-                    onClick={() => handleAnalyze(audio.id)}
-                    disabled={loading}
-                  >
-                    Analizar
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {audios
+              .filter((a) => !isAnalyzed(a.id))
+              .map((a) => {
+                const job = jobs[a.id];
+                return (
+                  <tr key={a.id}>
+                    <td>{a.id}</td>
+                    <td>{a.file_path.split("\\").pop()}</td>
+                    <td>{new Date(a.created_at).toLocaleString()}</td>
+                    <td style={{ minWidth: 200 }}>
+                      {!job ? (
+                        <Button
+                          variant="success"
+                          onClick={() => handleAnalyze(a)}
+                          disabled={loading}
+                        >
+                          Analizar
+                        </Button>
+                      ) : (
+                        <ProgressBar
+                          animated
+                          now={job.progress}
+                          label={`${job.progress}%`}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </Table>
       )}
 
-      <h2 className="mt-5 mb-4">📊 Audios analizados</h2>
+      <h2 className="mt-5">📊 Audios analizados</h2>
       {loading ? (
-        <Spinner animation="border" />
-      ) : audiosAnalizados.length === 0 ? (
-        <p>No hay audios analizados aún.</p>
+        <Spinner />
       ) : (
         <Table striped bordered hover>
           <thead>
@@ -1106,22 +1229,18 @@ const AudioHistory: React.FC = () => {
               <th>ID</th>
               <th>Archivo</th>
               <th>Fecha</th>
-              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
-            {audiosAnalizados.map((audio) => (
-              <tr key={audio.id}>
-                <td>{audio.id}</td>
-                <td>{audio.file_path.split("/").pop()}</td>
-                <td>{new Date(audio.created_at).toLocaleString()}</td>
-                <td>
-                  <Button variant="info" onClick={() => handleView(audio.id)}>
-                    Ver gráfica
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {audios
+              .filter((a) => isAnalyzed(a.id))
+              .map((a) => (
+                <tr key={a.id}>
+                  <td>{a.id}</td>
+                  <td>{a.file_path.split("\\").pop()}</td>
+                  <td>{new Date(a.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
           </tbody>
         </Table>
       )}
@@ -1410,7 +1529,8 @@ export default Login;
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\UploadAudio.tsx
 //src/pages/UploadAudio.tsx
-import React, { useState } from "react";
+// frontend/src/pages/UploadAudio.tsx
+import React, { useState, useRef } from "react";
 import api from "../api/axios";
 
 const MAX_SIZE_MB = 10;
@@ -1418,6 +1538,7 @@ const MAX_SIZE_MB = 10;
 const UploadAudio: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
     if (!file.type.startsWith("audio/")) {
@@ -1450,6 +1571,11 @@ const UploadAudio: React.FC = () => {
     try {
       const res = await api.post("/audios/", formData);
       setMessage(`✅ Audio subido con ID ${res.data.id}`);
+      // Limpiar estado y campo de input para evitar duplicados
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err: any) {
       setMessage(err.response?.data?.detail || "❌ Error al subir");
     }
@@ -1461,9 +1587,10 @@ const UploadAudio: React.FC = () => {
 
       <form onSubmit={handleSubmit}>
         <input
+          ref={fileInputRef}
           type="file"
           accept="audio/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          onChange={(e) => setFile(e.currentTarget.files?.[0] || null)}
           required
         />
         <button
@@ -1484,6 +1611,134 @@ const UploadAudio: React.FC = () => {
 };
 
 export default UploadAudio;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\UploadMultipleAudios.tsx
+// frontend/src/pages/UploadMultipleAudios.tsx
+import React, { useState } from "react";
+import axios from "../api/axios";
+
+const MAX_FILES = 20;
+const MAX_SIZE_MB = 10;
+
+const UploadMultipleAudios: React.FC = () => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [results, setResults] = useState<
+    { filename: string; content_type: string; size: number }[]
+  >([]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    const validFiles = selectedFiles.filter(validateFile);
+
+    if (validFiles.length > MAX_FILES) {
+      setMessage(`⚠️ Máximo ${MAX_FILES} archivos permitidos.`);
+      return;
+    }
+
+    setFiles(validFiles);
+    setMessage("");
+    setResults([]);
+  };
+
+  const validateFile = (file: File): boolean => {
+    const isAudio = file.type.startsWith("audio/");
+    const isSizeValid = file.size / (1024 * 1024) <= MAX_SIZE_MB;
+    return isAudio && isSizeValid;
+  };
+
+  const uploadFiles = async () => {
+    if (files.length === 0) {
+      setMessage("⚠️ No hay archivos para subir.");
+      return;
+    }
+
+    setUploading(true);
+    setMessage("");
+    setResults([]);
+
+    try {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("files", file); // 👈 campo esperado por FastAPI
+      });
+
+      const response = await axios.post("/audios/bulk", formData);
+
+      setMessage("✅ Todos los archivos se subieron correctamente.");
+      setResults(response.data.files || []);
+      setFiles([]);
+    } catch (error: any) {
+      console.error("Error al subir archivos:", error);
+      setMessage("❌ Error al subir los archivos.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const clearFiles = () => {
+    setFiles([]);
+    setMessage("");
+    setResults([]);
+  };
+
+  return (
+    <div style={{ padding: "1rem" }}>
+      <h2>🎙️ Subir Múltiples Audios</h2>
+
+      <input
+        type="file"
+        multiple
+        accept="audio/*"
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
+
+      {files.length > 0 && (
+        <ul>
+          {files.map((file, idx) => (
+            <li key={idx}>
+              {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div style={{ marginTop: "1rem" }}>
+        <button onClick={uploadFiles} disabled={uploading}>
+          {uploading ? "Subiendo..." : "Subir"}
+        </button>
+        <button
+          onClick={clearFiles}
+          disabled={uploading}
+          style={{ marginLeft: "1rem" }}
+        >
+          Limpiar
+        </button>
+      </div>
+
+      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
+
+      {results.length > 0 && (
+        <div style={{ marginTop: "1rem" }}>
+          <h3>📄 Resultados del servidor:</h3>
+          <ul>
+            {results.map((file, idx) => (
+              <li key={idx}>
+                <strong>{file.filename}</strong> – {file.content_type},{" "}
+                {(file.size / 1024).toFixed(2)} KB
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UploadMultipleAudios;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\index.tsx

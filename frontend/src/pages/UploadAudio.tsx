@@ -1,5 +1,6 @@
 //src/pages/UploadAudio.tsx
-import React, { useState } from "react";
+// frontend/src/pages/UploadAudio.tsx
+import React, { useState, useRef } from "react";
 import api from "../api/axios";
 
 const MAX_SIZE_MB = 10;
@@ -7,6 +8,7 @@ const MAX_SIZE_MB = 10;
 const UploadAudio: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
     if (!file.type.startsWith("audio/")) {
@@ -39,6 +41,11 @@ const UploadAudio: React.FC = () => {
     try {
       const res = await api.post("/audios/", formData);
       setMessage(`✅ Audio subido con ID ${res.data.id}`);
+      // Limpiar estado y campo de input para evitar duplicados
+      setFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     } catch (err: any) {
       setMessage(err.response?.data?.detail || "❌ Error al subir");
     }
@@ -50,9 +57,10 @@ const UploadAudio: React.FC = () => {
 
       <form onSubmit={handleSubmit}>
         <input
+          ref={fileInputRef}
           type="file"
           accept="audio/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          onChange={(e) => setFile(e.currentTarget.files?.[0] || null)}
           required
         />
         <button

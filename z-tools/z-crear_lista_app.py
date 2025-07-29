@@ -83,6 +83,7 @@ r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Dash
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Home.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Login.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\UploadAudio.tsx",
+r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\UploadMultipleAudios.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\index.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\routes\ProtectedRoute.tsx",
 r"C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\spinner.css",

@@ -1,5 +1,7 @@
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
 # emotion_recognition.py
+# backend/app/services/emotion_recognition.py
+
 from typing import List, Dict
 from transformers import pipeline
 from app.core.config import settings
@@ -34,11 +36,13 @@ try:
 except Exception:
     emotion_pipeline = None
 
+
 def recognize_emotions(file_path: str) -> List[Dict]:
     """
     Ejecuta el modelo de SER sobre el archivo de audio,
     asegurando que la señal sea mono.
-    Devuelve etiquetas legibles.
+    Devuelve una lista de emociones sin duplicados, 
+    cada una con su score máximo, ordenadas descendentemente.
     """
     if emotion_pipeline is None:
         raise RuntimeError("Pipeline no inicializado")
@@ -47,22 +51,36 @@ def recognize_emotions(file_path: str) -> List[Dict]:
     if not p.exists():
         raise FileNotFoundError(f"Audio no encontrado: {p}")
 
-    data, sr = sf.read(str(p))  # data puede ser mono o multi-canal
-
-    # Si tiene más de un canal, convertir a mono por promedio
+    # Leer señal de audio
+    data, sr = sf.read(str(p))
+    # Convertir a mono si es necesario
     if data.ndim > 1:
         data = np.mean(data, axis=1)
 
+    # Clasificación cruda
     raw_results = emotion_pipeline(data, sampling_rate=sr)
-
-    # 🔍 Mostrar resultados crudos en consola
     print("🔍 Resultados del modelo:", raw_results)
 
-    # Traducir etiquetas antes de devolver
-    return [
+    # Mapear labels legibles
+    mapped = [
         {
             "label": label_map.get(r["label"], r["label"]),
             "score": r["score"]
         }
         for r in raw_results
     ]
+
+    # Agrupar por etiqueta y conservar el score máximo
+    unique_scores: Dict[str, float] = {}
+    for item in mapped:
+        lbl, scr = item["label"], item["score"]
+        if lbl not in unique_scores or scr > unique_scores[lbl]:
+            unique_scores[lbl] = scr
+
+    # Reconstruir lista deduplicada, ordenada por score descendente
+    deduped = [
+        {"label": lbl, "score": unique_scores[lbl]}
+        for lbl in sorted(unique_scores, key=lambda l: unique_scores[l], reverse=True)
+    ]
+
+    return deduped

@@ -6,11 +6,26 @@ import api from "../api/axios";
 import EmotionChart from "../components/EmotionChart";
 import "../styles/spinner.css";
 import "../styles/progress.css";
-import type { AnalysisResult } from "../types";
+
+type Emotion = {
+  id: number;
+  label: string;
+  confidence: number;
+  timestamp: string;
+};
+
+type Alert = {
+  id: number;
+  message: string;
+  created_at: string;
+};
 
 const Analyze: React.FC = () => {
   const { audioId } = useParams();
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [result, setResult] = useState<{
+    emotions: Emotion[];
+    alerts: Alert[];
+  } | null>(null);
   const [status, setStatus] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState<number>(0);
@@ -24,9 +39,9 @@ const Analyze: React.FC = () => {
     }, 200);
 
     api
-      .get<AnalysisResult>(`/analyze/?audio_id=${audioId}`)
+      .get(`/analyze/?audio_id=${audioId}`)
       .then((res) => {
-        setResult(res.data);
+        setResult({ emotions: res.data.emotions, alerts: res.data.alerts });
         setLoading(false);
         setProgress(100);
         clearInterval(interval);
@@ -55,7 +70,7 @@ const Analyze: React.FC = () => {
         </div>
       ) : result ? (
         <>
-          <EmotionChart emotions={result.emotions} audioId={result.audio_id} />
+          <EmotionChart emotions={result.emotions} audioId={Number(audioId)} />
 
           <h2 style={{ marginTop: "2rem" }}>🚨 Alertas</h2>
           {result.alerts.length > 0 ? (

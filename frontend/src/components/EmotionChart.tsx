@@ -1,4 +1,5 @@
 // frontend/src/components/EmotionChart.tsx
+// frontend/src/components/EmotionChart.tsx
 import React from "react";
 import { Bar } from "react-chartjs-2";
 import {
@@ -27,10 +28,21 @@ type Emotion = {
 
 const emotionColors: Record<string, string> = {
   Tristeza: "#5DADE2",
-  Alegría: "#F7DC6F",
-  Miedo: "#A569BD",
-  Enojo: "#E74C3C",
-  Desagrado: "#58D68D",
+  Alegría: "#FFD700",
+  Miedo: "#4B0082",
+  Enojo: "#E63946",
+  Desagrado: "#9ACD32",
+  Sorpresa: "#FFA500",
+  Neutral: "#95A5A6",
+  Confianza: "#008080",
+  Vergüenza: "#8E44AD",
+  Culpa: "#8B4513",
+  Amor: "#E91E63",
+  Orgullo: "#FFB400",
+  Interés: "#1ABC9C",
+  Calma: "#AED6F1",
+  Confusión: "#7F8C8D",
+  Ansiedad: "#34495E",
 };
 
 type Props = {
@@ -39,54 +51,42 @@ type Props = {
 };
 
 const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
-  if (!emotions || emotions.length === 0) {
+  if (!emotions.length) {
     return <p>⚠️ No se detectaron emociones en este audio.</p>;
   }
 
-  const validEmotions = emotions.filter(
+  const valid = emotions.filter(
     (e) => typeof e.label === "string" && typeof e.confidence === "number"
   );
-
-  if (validEmotions.length === 0) {
+  if (!valid.length) {
     return <p>⚠️ Los datos de emociones están incompletos o corruptos.</p>;
   }
 
   const data = {
-    labels: validEmotions.map((e) => e.label),
+    labels: valid.map((e) => e.label),
     datasets: [
       {
         label: "Confianza (%)",
-        data: validEmotions.map((e) => e.confidence * 100),
-        backgroundColor: validEmotions.map(
-          (e) => emotionColors[e.label] || "#ccc"
-        ),
+        data: valid.map((e) => e.confidence * 100),
+        backgroundColor: valid.map((e) => emotionColors[e.label] || "#ccc"),
         datalabels: {
           anchor: "end",
           align: "top",
-          formatter: (value: number) => `${value.toFixed(1)}%`,
+          formatter: (v: number) => `${v.toFixed(1)}%`,
           color: "#333",
-          font: {
-            weight: "bold",
-          },
+          font: { weight: "bold" },
         },
       },
     ],
   };
 
   const options = {
-    plugins: {
-      legend: { display: false },
-      datalabels: {
-        display: true,
-      },
-    },
+    plugins: { legend: { display: false }, datalabels: { display: true } },
     scales: {
       y: {
         beginAtZero: true,
         max: 100,
-        ticks: {
-          callback: (value: number) => `${value}%`,
-        },
+        ticks: { callback: (v: number) => `${v}%` },
       },
     },
     responsive: true,
@@ -96,35 +96,48 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
   return (
     <section>
       <h2>🎭 Emociones detectadas en el audio #{audioId}</h2>
-      <div style={{ maxWidth: "600px", margin: "0 auto", height: "300px" }}>
-        <Bar data={data} options={options} />
-      </div>
 
-      <div style={{ marginTop: "1rem" }}>
-        <h3>🎨 Leyenda de emociones</h3>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {Object.entries(emotionColors).map(([label, color]) => (
-            <li
-              key={label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "4px",
-              }}
-            >
-              <div
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: "2rem",
+          marginTop: "1rem",
+        }}
+      >
+        {/* Gráfico a la izquierda */}
+        <div style={{ flex: 1, minWidth: "300px", height: "300px" }}>
+          <Bar data={data} options={options} />
+        </div>
+
+        {/* Leyenda a la derecha */}
+        <aside style={{ minWidth: "160px" }}>
+          <h3>🎨 Leyenda</h3>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {Object.entries(emotionColors).map(([label, color]) => (
+              <li
+                key={label}
                 style={{
-                  width: "16px",
-                  height: "16px",
-                  backgroundColor: color,
-                  marginRight: "8px",
-                  borderRadius: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "4px",
                 }}
-              />
-              {label}
-            </li>
-          ))}
-        </ul>
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 16,
+                    height: 16,
+                    backgroundColor: color,
+                    borderRadius: 4,
+                    marginRight: 8,
+                  }}
+                />
+                {label}
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
     </section>
   );

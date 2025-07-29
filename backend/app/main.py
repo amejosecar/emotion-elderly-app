@@ -89,6 +89,8 @@ async def logout():
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 protected = [Depends(get_current_user)]
 app.include_router(users.router,    prefix="/users",   tags=["users"],    dependencies=protected)
-app.include_router(audios.router,   prefix="/audios",  tags=["audios"],   dependencies=protected)
+#app.include_router(audios.router,   prefix="/audios",  tags=["audios"],   dependencies=protected)
+#app.include_router(audios.router, dependencies=protected)
+app.include_router(audios.router, prefix="/audios", tags=["audios"], dependencies=protected)
 app.include_router(analyze.router,  prefix="/analyze", tags=["analyze"],  dependencies=protected)
 app.include_router(alerts.router,   prefix="/alerts",  tags=["alerts"],   dependencies=protected)

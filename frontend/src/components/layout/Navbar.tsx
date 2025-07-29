@@ -25,8 +25,8 @@ const Navbar: React.FC = () => {
           <Link to="/audios">Audios</Link>
           <Link to="/alerts">Alertas</Link>
           <Link to="/upload">Subir Audio</Link>
-
-          {/* 👤 Info del usuario logueado */}
+          <Link to="/upload-multiple">Subir Múltiples Audios</Link>{" "}
+          {/* ✅ nuevo enlace */}
           {user && (
             <span style={{ marginLeft: "auto" }}>
               👤 <strong>{user.email}</strong>
