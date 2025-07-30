@@ -1,8 +1,6 @@
 // # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
 // # AudioHistory.tsx
 
-// frontend/src/pages/AudioHistory.tsx
-
 import React, { useEffect, useState, useRef } from "react";
 import api from "../api/axios";
 import Table from "react-bootstrap/Table";
@@ -24,27 +22,30 @@ const AudioHistory: React.FC = () => {
   const [jobs, setJobs] = useState<Record<number, JobInfo>>({});
   const polling = useRef<Record<string, NodeJS.Timer>>({});
 
-  // Fetch inicial de audios y resultados
+  // 🔄 Refrescar audios y resultados
+  const refreshAll = async () => {
+    setLoading(true);
+    try {
+      const [ar, rr] = await Promise.all([
+        api.get<Audio[]>("/audios"),
+        api.get<AnalysisResult[]>("/analyze/results/all"),
+      ]);
+      setAudios(ar.data);
+      setResults(rr.data);
+    } catch (e) {
+      console.error("Error al refrescar datos:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch inicial
   useEffect(() => {
-    (async () => {
-      try {
-        const [ar, rr] = await Promise.all([
-          api.get<Audio[]>("/audios"),
-          api.get<AnalysisResult[]>("/analyze/results/all"),
-        ]);
-        setAudios(ar.data);
-        setResults(rr.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    refreshAll();
   }, []);
 
   const isAnalyzed = (id: number) => results.some((r) => r.audio_id === id);
 
-  // Iniciar job y arrancar polling
   const handleAnalyze = async (audio: Audio) => {
     setLoading(true);
     try {
@@ -60,6 +61,7 @@ const AudioHistory: React.FC = () => {
           progress: number;
           audio_id: number;
         }>("/analyze/status", { params: { job_id: jobId } });
+
         setJobs((j) => ({
           ...j,
           [audio.id]: { jobId, progress: st.data.progress },
@@ -69,8 +71,7 @@ const AudioHistory: React.FC = () => {
           clearInterval(polling.current[jobId]);
           delete polling.current[jobId];
 
-          const rr = await api.get<AnalysisResult[]>("/analyze/results/all");
-          setResults(rr.data);
+          await refreshAll();
 
           setJobs((j) => {
             const c = { ...j };
@@ -90,7 +91,11 @@ const AudioHistory: React.FC = () => {
 
   return (
     <Container style={{ marginTop: "2rem" }}>
-      <h2>🎧 Audios no analizados</h2>
+      <h2>📁 Historial de audios</h2>
+      <Button variant="secondary" onClick={refreshAll} className="mb-3">
+        🔄 Recargar audios y resultados
+      </Button>
+
       {loading ? (
         <Spinner />
       ) : (
@@ -100,65 +105,42 @@ const AudioHistory: React.FC = () => {
               <th>ID</th>
               <th>Archivo</th>
               <th>Fecha</th>
+              <th>Estado</th>
               <th>Acción/Progreso</th>
             </tr>
           </thead>
           <tbody>
-            {audios
-              .filter((a) => !isAnalyzed(a.id))
-              .map((a) => {
-                const job = jobs[a.id];
-                return (
-                  <tr key={a.id}>
-                    <td>{a.id}</td>
-                    <td>{a.file_path.split("\\").pop()}</td>
-                    <td>{new Date(a.created_at).toLocaleString()}</td>
-                    <td style={{ minWidth: 200 }}>
-                      {!job ? (
-                        <Button
-                          variant="success"
-                          onClick={() => handleAnalyze(a)}
-                          disabled={loading}
-                        >
-                          Analizar
-                        </Button>
-                      ) : (
-                        <ProgressBar
-                          animated
-                          now={job.progress}
-                          label={`${job.progress}%`}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </Table>
-      )}
-
-      <h2 className="mt-5">📊 Audios analizados</h2>
-      {loading ? (
-        <Spinner />
-      ) : (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Archivo</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {audios
-              .filter((a) => isAnalyzed(a.id))
-              .map((a) => (
+            {audios.map((a) => {
+              const job = jobs[a.id];
+              const analyzed = isAnalyzed(a.id);
+              return (
                 <tr key={a.id}>
                   <td>{a.id}</td>
-                  <td>{a.file_path.split("\\").pop()}</td>
+                  <td>{a.file_path.split("/").pop()}</td>
                   <td>{new Date(a.created_at).toLocaleString()}</td>
+                  <td>{analyzed ? "✅ Analizado" : "⏳ Pendiente"}</td>
+                  <td style={{ minWidth: 200 }}>
+                    {analyzed ? (
+                      "✔️"
+                    ) : !job ? (
+                      <Button
+                        variant="success"
+                        onClick={() => handleAnalyze(a)}
+                        disabled={loading}
+                      >
+                        Analizar
+                      </Button>
+                    ) : (
+                      <ProgressBar
+                        animated
+                        now={job.progress}
+                        label={`${job.progress}%`}
+                      />
+                    )}
+                  </td>
                 </tr>
-              ))}
+              );
+            })}
           </tbody>
         </Table>
       )}

@@ -23,4 +23,4 @@ with Session(engine) as session:
     session.execute(alerts_table.delete())
     session.commit()
 
-print("✅ Tablas 'audios' y 'emotions' vaciadas correctamente.")
+print("✅ Tablas 'audios', 'emotions' y 'alerts' vaciadas correctamente.")

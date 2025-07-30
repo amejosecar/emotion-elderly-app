@@ -52,7 +52,13 @@ const UploadMultipleAudios: React.FC = () => {
       const response = await axios.post("/audios/bulk", formData);
 
       setMessage("✅ Todos los archivos se subieron correctamente.");
-      setResults(response.data.files || []);
+      setResults(
+        response.data.map((audio: any) => ({
+          filename: audio.file_path.split("/").pop(),
+          content_type: "audio",
+          size: 0, // opcional si quieres mostrar algo
+        }))
+      );
       setFiles([]);
     } catch (error: any) {
       console.error("Error al subir archivos:", error);

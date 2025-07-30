@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
+import EmotionDistributionChart from "../components/Dashboard/EmotionDistributionChart";
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -28,19 +29,22 @@ const Dashboard: React.FC = () => {
 
   // Usuario autenticado y cargado correctamente
   return (
-    <main>
+    <main className="container py-4">
       <h1>Panel de Control</h1>
       <p>
         Bienvenido <strong>{user.email}</strong>, aquí tienes el resumen de
         actividad y análisis recientes.
       </p>
 
-      {/* Aquí puedes agregar tu componente o lógica para mostrar datos/emociones */}
-      {/* por ejemplo: <ActivitySummary data={activityData} /> */}
+      {/* 📊 Gráfico de distribución de emociones */}
+      <EmotionDistributionChart />
 
-      <button type="button" onClick={logout}>
-        Cerrar sesión
-      </button>
+      {/* 🔓 Logout */}
+      <div className="mt-4">
+        <button type="button" className="btn btn-danger" onClick={logout}>
+          Cerrar sesión
+        </button>
+      </div>
     </main>
   );
 };

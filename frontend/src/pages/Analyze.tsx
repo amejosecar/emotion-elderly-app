@@ -24,7 +24,9 @@ const Analyze: React.FC = () => {
     }, 200);
 
     api
-      .get<AnalysisResult>(`/analyze/?audio_id=${audioId}`)
+      .get<AnalysisResult>("/analyze/by-audio", {
+        params: { audio_id: audioId },
+      })
       .then((res) => {
         setResult(res.data);
         setLoading(false);

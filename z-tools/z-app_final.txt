@@ -1,4 +1,4 @@
-Creado el 2025-07-29 14:34:08
+Creado el 2025-07-30 14:25:38
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore
@@ -437,8 +437,6 @@ def list_alerts(
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze.py
 # backend/app/api/routers/analyze.py
-# backend/app/api/routers/analyze.py
-
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from uuid import uuid4
@@ -454,9 +452,9 @@ from app.services.emotion_recognition import recognize_emotions
 from app.db.session import SessionLocal
 
 router = APIRouter()
-# En memoria: { job_id: { status, progress, audio_id, result } }
 JOBS: dict[str, dict] = {}
 
+# 🧠 Función que ejecuta el análisis en segundo plano
 def run_job(job_id: str, audio_id: int, user_id: int):
     db = SessionLocal()
     try:
@@ -464,7 +462,7 @@ def run_job(job_id: str, audio_id: int, user_id: int):
         time.sleep(0.1)
         JOBS[job_id]["progress"] = 10
 
-        audio = db.query(Audio).filter(Audio.id==audio_id, Audio.user_id==user_id).first()
+        audio = db.query(Audio).filter(Audio.id == audio_id, Audio.user_id == user_id).first()
         if not audio:
             raise FileNotFoundError("Audio desaparecido en run_job")
 
@@ -484,34 +482,31 @@ def run_job(job_id: str, audio_id: int, user_id: int):
                 generated_alerts.append(al)
 
         emotions_payload = [EmotionRead.from_orm(e).dict() for e in saved_emotions]
-        alerts_payload   = [AlertRead.from_orm(a).dict()   for a in generated_alerts]
+        alerts_payload = [AlertRead.from_orm(a).dict() for a in generated_alerts]
+
         JOBS[job_id].update(
             status="done",
             progress=100,
             result={
                 "audio_id": audio_id,
                 "emotions": emotions_payload,
-                "alerts":   alerts_payload
+                "alerts": alerts_payload
             }
         )
-
     except Exception as e:
         JOBS[job_id].update(status="error", progress=100, result={"detail": str(e)})
     finally:
         db.close()
 
-
+# 🚀 Iniciar análisis
 @router.post("/start", summary="Iniciar análisis asíncrono")
 def start_analysis(
     background_tasks: BackgroundTasks,
     audio_id: int = Query(...),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user = Depends(get_current_user)
 ):
-    audio = db.query(Audio).filter(
-        Audio.id==audio_id,
-        Audio.user_id==current_user.id
-    ).first()
+    audio = db.query(Audio).filter(Audio.id == audio_id, Audio.user_id == current_user.id).first()
     if not audio:
         raise HTTPException(404, "Audio no encontrado")
 
@@ -520,19 +515,19 @@ def start_analysis(
     background_tasks.add_task(run_job, job_id, audio_id, current_user.id)
     return {"job_id": job_id}
 
-
+# 📊 Estado del job
 @router.get("/status", summary="Estado de un job")
 def get_status(job_id: str = Query(...)):
     job = JOBS.get(job_id)
     if not job:
         raise HTTPException(404, "Job no encontrado")
     return {
-        "status":   job["status"],
+        "status": job["status"],
         "progress": job["progress"],
         "audio_id": job["audio_id"],
     }
 
-
+# 📈 Resultados por job_id
 @router.get("/results", response_model=AnalysisResult, summary="Resultados de un job")
 def get_results(job_id: str = Query(...)):
     job = JOBS.get(job_id)
@@ -542,27 +537,82 @@ def get_results(job_id: str = Query(...)):
         raise HTTPException(status.HTTP_202_ACCEPTED, "Job aún en ejecución")
     return job["result"]
 
+# 📋 Todos los resultados del usuario
+@router.get("/results/all", response_model=list[AnalysisResult], summary="Todos los resultados de análisis")
+def get_all_results(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    audios = db.query(Audio).filter(Audio.user_id == current_user.id).all()
+    results = []
+
+    for audio in audios:
+        emotions = db.query(Emotion).filter(Emotion.audio_id == audio.id).all()
+        alerts = db.query(Alert).filter(Alert.emotion.has(audio_id=audio.id)).all()
+
+        result = AnalysisResult(
+            audio_id=audio.id,
+            emotions=[EmotionRead.from_orm(e) for e in emotions],
+            alerts=[AlertRead.from_orm(a) for a in alerts]
+        )
+        results.append(result)
+
+    return results
+
+# ✅ NUEVO: Obtener resultados por audio_id
+@router.get("/by-audio", response_model=AnalysisResult, summary="Resultados por audio_id")
+def get_result_by_audio(
+    audio_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    audio = db.query(Audio).filter(Audio.id == audio_id, Audio.user_id == current_user.id).first()
+    if not audio:
+        raise HTTPException(404, "Audio no encontrado")
+
+    emotions = db.query(Emotion).filter(Emotion.audio_id == audio.id).all()
+    alerts = db.query(Alert).filter(Alert.emotion.has(audio_id=audio.id)).all()
+
+    return AnalysisResult(
+        audio_id=audio.id,
+        emotions=[EmotionRead.from_orm(e) for e in emotions],
+        alerts=[AlertRead.from_orm(a) for a in alerts]
+    )
+
+# 📊 Estado del job por audio_id
+@router.get("/status/by-audio", summary="Estado del job por audio_id")
+def get_status_by_audio(
+    audio_id: int = Query(...),
+    current_user = Depends(get_current_user)
+):
+    for job in JOBS.values():
+        if job["audio_id"] == audio_id:
+            return {
+                "status": job["status"],
+                "progress": job["progress"],
+                "audio_id": job["audio_id"],
+            }
+    raise HTTPException(404, "No se encontró job para este audio")
+
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\audios.py
 # backend/app/api/routers/audios.py
-
 from fastapi import (
     APIRouter, UploadFile, File,
     Depends, HTTPException, BackgroundTasks
 )
-from typing      import List
+from typing import List
 from sqlalchemy.orm import Session
-from uuid         import uuid4
+from uuid import uuid4
 import os
 
 from app.api.dependencies import get_db
-from app.core.config      import settings
-from app.core.security    import get_current_user
-from app.models           import Audio
-from app.schemas.audio    import AudioRead
+from app.core.config import settings
+from app.core.security import get_current_user
+from app.models import Audio
+from app.schemas.audio import AudioRead
 from app.services.audio_processing import process_audio
 
-#router = APIRouter(prefix="/audios", tags=["audios"])
 router = APIRouter(tags=["audios"])
 
 # ─── Subir un único audio ────────────────────────────────────
@@ -572,25 +622,26 @@ router = APIRouter(tags=["audios"])
     summary="Subir un único audio"
 )
 async def upload_audio(
+    background_tasks: BackgroundTasks,  # ✅ primero
     file: UploadFile = File(...),
-    db: Session       = Depends(get_db),
-    current_user     = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     # Validación MIME
     ALLOWED = {
         "audio/wav", "audio/x-wav",
-        "audio/mpeg","audio/mp3",
+        "audio/mpeg", "audio/mp3",
         "audio/x-m4a"
     }
     if file.content_type not in ALLOWED:
         raise HTTPException(400, f"Tipo no permitido: {file.content_type}")
 
     # Guardar en disco
-    ext      = os.path.splitext(file.filename)[1]
-    name     = f"{uuid4().hex}{ext}"
+    ext = os.path.splitext(file.filename)[1]
+    name = f"{uuid4().hex}{ext}"
     save_dir = settings.STORAGE_PATH
     os.makedirs(save_dir, exist_ok=True)
-    path     = os.path.join(save_dir, name)
+    path = os.path.join(save_dir, name)
 
     content = await file.read()
     with open(path, "wb") as f:
@@ -601,10 +652,19 @@ async def upload_audio(
 
     # Registrar en BD
     audio = Audio(user_id=current_user.id, file_path=path)
-    db.add(audio); db.commit(); db.refresh(audio)
+    db.add(audio)
+    db.commit()
+    db.refresh(audio)
+
+    # ✅ Lanzar el análisis automáticamente en segundo plano
+    background_tasks.add_task(
+        process_audio,
+        audio.id,
+        path,
+        current_user.id
+    )
 
     return audio
-
 
 # ─── Subir y procesar múltiples audios ───────────────────────
 @router.post(
@@ -615,8 +675,8 @@ async def upload_audio(
 async def upload_bulk_audios(
     background_tasks: BackgroundTasks,
     files: List[UploadFile] = File(..., description="Archivos de audio"),
-    db: Session             = Depends(get_db),
-    current_user            = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     saved: List[Audio] = []
 
@@ -624,30 +684,31 @@ async def upload_bulk_audios(
         if not file.content_type.startswith("audio/"):
             raise HTTPException(400, f"Tipo no permitido: {file.content_type}")
 
-        ext      = os.path.splitext(file.filename)[1]
-        name     = f"{uuid4().hex}{ext}"
+        ext = os.path.splitext(file.filename)[1]
+        name = f"{uuid4().hex}{ext}"
         save_dir = settings.STORAGE_PATH
         os.makedirs(save_dir, exist_ok=True)
-        path     = os.path.join(save_dir, name)
+        path = os.path.join(save_dir, name)
 
         content = await file.read()
         with open(path, "wb") as f:
             f.write(content)
 
         audio = Audio(user_id=current_user.id, file_path=path)
-        db.add(audio); db.commit(); db.refresh(audio)
+        db.add(audio)
+        db.commit()
+        db.refresh(audio)
         saved.append(audio)
 
-        # Lanzar el análisis en background (no bloquea esta request)
-        # background_tasks.add_task(
-        #     process_audio,
-        #     audio.id,
-        #     path,
-        #     current_user.id
-        # )
+        # ✅ Lanzar el análisis en background
+        background_tasks.add_task(
+            process_audio,
+            audio.id,
+            path,
+            current_user.id
+        )
 
     return saved
-
 
 # ─── Listar audios del usuario ───────────────────────────────
 @router.get(
@@ -656,8 +717,8 @@ async def upload_bulk_audios(
     summary="Listar audios del usuario"
 )
 def list_audios(
-    db: Session       = Depends(get_db),
-    current_user      = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
     return db.query(Audio).filter(Audio.user_id == current_user.id).all()
 
@@ -1184,7 +1245,6 @@ class UserRead(BaseModel):
 # audio_service.py
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
 # emotion_recognition.py
 # backend/app/services/emotion_recognition.py
 
@@ -1194,6 +1254,9 @@ from app.core.config import settings
 from pathlib import Path
 import soundfile as sf
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Diccionario de mapeo de etiquetas
 label_map = {
@@ -1219,7 +1282,8 @@ try:
         model=settings.HUGGINGFACE_MODEL,
         top_k=5
     )
-except Exception:
+except Exception as e:
+    logger.error(f"❌ Error cargando modelo HuggingFace: {e}")
     emotion_pipeline = None
 
 
@@ -1239,13 +1303,23 @@ def recognize_emotions(file_path: str) -> List[Dict]:
 
     # Leer señal de audio
     data, sr = sf.read(str(p))
+    if data.size == 0:
+        raise ValueError(f"⚠️ Audio vacío: {p}")
+
     # Convertir a mono si es necesario
     if data.ndim > 1:
         data = np.mean(data, axis=1)
 
+    # Normalizar señal
+    data = data / np.max(np.abs(data)) if np.max(np.abs(data)) > 0 else data
+
     # Clasificación cruda
-    raw_results = emotion_pipeline(data, sampling_rate=sr)
-    print("🔍 Resultados del modelo:", raw_results)
+    try:
+        raw_results = emotion_pipeline(data, sampling_rate=sr)
+        logger.info(f"🔍 Resultados del modelo para {p.name}: {raw_results}")
+    except Exception as e:
+        logger.error(f"❌ Error en clasificación de audio {p.name}: {e}")
+        return []
 
     # Mapear labels legibles
     mapped = [
@@ -1655,11 +1729,11 @@ import axios from "axios";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
   headers: {
-    "Content-Type": "multipart/form-data", // Ideal para subir archivos
+    "Content-Type": "multipart/form-data",
   },
 });
 
-// Interceptor para añadir el token Bearer si existe
+// Añadir token si existe
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
@@ -1668,8 +1742,41 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    console.error("❌ Error en interceptor de axios:", error);
+  (error) => Promise.reject(error)
+);
+
+// Manejo de errores globales
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Si el error es 401 y no es un intento de refresh
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        // Intentar refrescar el token
+        const res = await api.post("/auth/refresh");
+        const newToken = res.data.access_token;
+
+        // Guardar nuevo token y reintentar la petición original
+        localStorage.setItem("access_token", newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Si falla el refresh, limpiar y redirigir
+        localStorage.removeItem("access_token");
+        alert("⚠️ Tu sesión ha expirado. Por favor inicia sesión nuevamente.");
+        window.location.href = "/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
@@ -1778,6 +1885,9 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
     maintainAspectRatio: false,
   };
 
+  // 🎯 Emociones únicas detectadas en este análisis
+  const detectedLabels = new Set(valid.map((e) => e.label));
+
   return (
     <section>
       <h2>🎭 Emociones detectadas en el audio #{audioId}</h2>
@@ -1795,11 +1905,11 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
           <Bar data={data} options={options} />
         </div>
 
-        {/* Leyenda a la derecha */}
+        {/* Leyenda solo de emociones detectadas */}
         <aside style={{ minWidth: "160px" }}>
           <h3>🎨 Leyenda</h3>
           <ul style={{ listStyle: "none", padding: 0 }}>
-            {Object.entries(emotionColors).map(([label, color]) => (
+            {[...detectedLabels].map((label) => (
               <li
                 key={label}
                 style={{
@@ -1813,7 +1923,7 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
                     display: "inline-block",
                     width: 16,
                     height: 16,
-                    backgroundColor: color,
+                    backgroundColor: emotionColors[label] || "#ccc",
                     borderRadius: 4,
                     marginRight: 8,
                   }}
@@ -2126,17 +2236,16 @@ export const useAuth = () => {
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Alerts.tsx
-// frontend/src/pages/Alerts.tsx
 // src/pages/Alerts.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Row,
   Col,
-  ListGroup,
   Button,
   Spinner,
   Alert as BSAlert,
   Card,
+  Table,
 } from "react-bootstrap";
 import api from "../api/axios";
 import type { Audio, AnalysisResult } from "../types";
@@ -2150,18 +2259,51 @@ const Alerts: React.FC = () => {
   const [error, setError] = useState<string>("");
   const [selectedAudio, setSelectedAudio] = useState<number | null>(null);
   const [viewType, setViewType] = useState<"alert" | "chart">("alert");
+  const [results, setResults] = useState<Record<number, AnalysisResult>>({});
+  const [jobs, setJobs] = useState<Record<number, string>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
-  // 1) Carga inicial de audios con análisis disponible
+  const paginatedAudios = audios.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const totalPages = Math.ceil(audios.length / itemsPerPage);
+
   useEffect(() => {
     (async () => {
       setLoadingList(true);
       try {
-        const [audiosRes, emoRes] = await Promise.all([
+        const [audiosRes, resultsRes] = await Promise.all([
           api.get<Audio[]>("/audios"),
-          api.get<{ audio_id: number }[]>("/analyze/emotions"),
+          api.get<AnalysisResult[]>("/analyze/results/all"),
         ]);
-        const analyzedIds = new Set(emoRes.data.map((e) => e.audio_id));
-        setAudios(audiosRes.data.filter((a) => analyzedIds.has(a.id)));
+        const analyzedIds = new Set(resultsRes.data.map((r) => r.audio_id));
+        const filteredAudios = audiosRes.data.filter((a) =>
+          analyzedIds.has(a.id)
+        );
+        setAudios(filteredAudios);
+
+        const resultMap: Record<number, AnalysisResult> = {};
+        resultsRes.data.forEach((r) => {
+          resultMap[r.audio_id] = r;
+        });
+        setResults(resultMap);
+
+        const jobStatuses: Record<number, string> = {};
+        await Promise.all(
+          filteredAudios.map(async (audio) => {
+            try {
+              const res = await api.get("/analyze/status/by-audio", {
+                params: { audio_id: audio.id },
+              });
+              jobStatuses[audio.id] = res.data.status;
+            } catch {
+              jobStatuses[audio.id] = "unknown";
+            }
+          })
+        );
+        setJobs(jobStatuses);
       } catch (err) {
         console.error(err);
         setError("No se pudieron cargar los audios.");
@@ -2171,7 +2313,6 @@ const Alerts: React.FC = () => {
     })();
   }, []);
 
-  // 2) Función genérica para traer el análisis y fijar modo de vista
   const fetchAnalysis = useCallback(
     async (audioId: number, mode: "alert" | "chart") => {
       setError("");
@@ -2181,9 +2322,9 @@ const Alerts: React.FC = () => {
       setAnalysis(null);
 
       try {
-        const res = await api.get<AnalysisResult>(
-          `/analyze?audio_id=${audioId}`
-        );
+        const res = await api.get<AnalysisResult>("/analyze/by-audio", {
+          params: { audio_id: audioId },
+        });
         setAnalysis(res.data);
       } catch (err) {
         console.error(err);
@@ -2195,11 +2336,18 @@ const Alerts: React.FC = () => {
     []
   );
 
-  // 3) Render del bloque de alerta
   const renderAlertReport = () => {
     if (!analysis) return null;
 
     const { audio_id, emotions, alerts } = analysis;
+    if (!emotions || emotions.length === 0) {
+      return (
+        <BSAlert variant="warning">
+          ⚠️ No se detectaron emociones en este audio.
+        </BSAlert>
+      );
+    }
+
     const top4 = [...emotions]
       .sort((a, b) => b.confidence - a.confidence)
       .slice(0, 4);
@@ -2209,7 +2357,7 @@ const Alerts: React.FC = () => {
       (e) => e.confidence >= 0.1 && e.confidence < 0.12
     );
     const bajo = top4.filter((e) => e.confidence >= 0.05 && e.confidence < 0.1);
-    const ts = alerts[0]?.created_at ?? new Date().toISOString();
+    const ts = alerts?.length ? alerts[0].created_at : new Date().toISOString();
 
     return (
       <Card className="p-3">
@@ -2252,49 +2400,110 @@ const Alerts: React.FC = () => {
   };
 
   return (
-    <div className="container py-4">
-      <Row>
-        {/* Columna izquierda: lista de audios */}
-        <Col md={4}>
-          <h2>🚨 Alertas</h2>
-          {error && <BSAlert variant="danger">{error}</BSAlert>}
+    <div className="container-fluid py-4">
+      <h2>🚨 Alertas</h2>
+      {error && <BSAlert variant="danger">{error}</BSAlert>}
 
+      <Row>
+        {/* Tabla de audios */}
+        <Col md={6} className="pe-2">
           {loadingList ? (
             <Spinner animation="border" />
           ) : (
-            <ListGroup>
-              {audios.map((a) => (
-                <ListGroup.Item
-                  key={a.id}
-                  active={a.id === selectedAudio}
-                  className="d-flex justify-content-between align-items-center"
+            <>
+              <Table striped bordered hover responsive className="mb-3">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Archivo</th>
+                    <th>Fecha</th>
+                    <th>Ver alerta</th>
+                    <th>Ver gráfico</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedAudios.map((a) => {
+                    const status = jobs[a.id];
+                    const hasResult = results[a.id] !== undefined;
+                    const isPending =
+                      status === "pending" || status === "running";
+                    const isError = status === "error";
+
+                    return (
+                      <tr
+                        key={a.id}
+                        className={
+                          a.id === selectedAudio ? "table-primary" : ""
+                        }
+                      >
+                        <td>{a.id}</td>
+                        <td>{a.file_path}</td>
+                        <td>{new Date(a.created_at).toLocaleString()}</td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={() => fetchAnalysis(a.id, "alert")}
+                            disabled={!hasResult || isError}
+                          >
+                            Ver alerta
+                          </Button>
+                          {isPending && (
+                            <span className="ms-2 text-warning">
+                              ⏳{" "}
+                              {status === "pending" ? "En cola" : "Procesando"}
+                            </span>
+                          )}
+                          {isError && (
+                            <span className="ms-2 text-danger">
+                              ❌ Error en análisis
+                            </span>
+                          )}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="info"
+                            onClick={() => fetchAnalysis(a.id, "chart")}
+                            disabled={!hasResult || isError}
+                          >
+                            Ver gráfico
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+
+              {/* Paginación */}
+              <div className="d-flex justify-content-between">
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => prev - 1)}
                 >
-                  <small>{new Date(a.created_at).toLocaleString()}</small>
-                  <div>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => fetchAnalysis(a.id, "alert")}
-                      className="me-1"
-                    >
-                      Ver alerta
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="info"
-                      onClick={() => fetchAnalysis(a.id, "chart")}
-                    >
-                      Ver gráfico
-                    </Button>
-                  </div>
-                </ListGroup.Item>
-              ))}
-            </ListGroup>
+                  ⬅ Anterior
+                </Button>
+                <span>
+                  Página {currentPage} de {totalPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                >
+                  Siguiente ➡
+                </Button>
+              </div>
+            </>
           )}
         </Col>
 
-        {/* Columna derecha: detalle */}
-        <Col md={8}>
+        {/* Análisis a la derecha */}
+        <Col md={6} className="ps-2">
           {loadingAnalysis && (
             <div className="text-center">
               <Spinner animation="border" />
@@ -2306,12 +2515,15 @@ const Alerts: React.FC = () => {
             viewType === "alert" &&
             renderAlertReport()}
 
-          {!loadingAnalysis && analysis && viewType === "chart" && (
-            <EmotionChart
-              emotions={analysis.emotions}
-              audioId={analysis.audio_id}
-            />
-          )}
+          {!loadingAnalysis &&
+            analysis &&
+            viewType === "chart" &&
+            analysis.emotions.length > 0 && (
+              <EmotionChart
+                emotions={analysis.emotions}
+                audioId={analysis.audio_id}
+              />
+            )}
         </Col>
       </Row>
     </div>
@@ -2330,26 +2542,11 @@ import api from "../api/axios";
 import EmotionChart from "../components/EmotionChart";
 import "../styles/spinner.css";
 import "../styles/progress.css";
-
-type Emotion = {
-  id: number;
-  label: string;
-  confidence: number;
-  timestamp: string;
-};
-
-type Alert = {
-  id: number;
-  message: string;
-  created_at: string;
-};
+import type { AnalysisResult } from "../types";
 
 const Analyze: React.FC = () => {
   const { audioId } = useParams();
-  const [result, setResult] = useState<{
-    emotions: Emotion[];
-    alerts: Alert[];
-  } | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [status, setStatus] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [progress, setProgress] = useState<number>(0);
@@ -2363,9 +2560,11 @@ const Analyze: React.FC = () => {
     }, 200);
 
     api
-      .get(`/analyze/?audio_id=${audioId}`)
+      .get<AnalysisResult>("/analyze/by-audio", {
+        params: { audio_id: audioId },
+      })
       .then((res) => {
-        setResult({ emotions: res.data.emotions, alerts: res.data.alerts });
+        setResult(res.data);
         setLoading(false);
         setProgress(100);
         clearInterval(interval);
@@ -2394,7 +2593,7 @@ const Analyze: React.FC = () => {
         </div>
       ) : result ? (
         <>
-          <EmotionChart emotions={result.emotions} audioId={Number(audioId)} />
+          <EmotionChart emotions={result.emotions} audioId={result.audio_id} />
 
           <h2 style={{ marginTop: "2rem" }}>🚨 Alertas</h2>
           {result.alerts.length > 0 ? (
@@ -2424,8 +2623,6 @@ export default Analyze;
 // # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
 // # AudioHistory.tsx
 
-// frontend/src/pages/AudioHistory.tsx
-
 import React, { useEffect, useState, useRef } from "react";
 import api from "../api/axios";
 import Table from "react-bootstrap/Table";
@@ -2433,9 +2630,7 @@ import Button from "react-bootstrap/Button";
 import Container from "react-bootstrap/Container";
 import Spinner from "react-bootstrap/Spinner";
 import ProgressBar from "react-bootstrap/ProgressBar";
-
-type Audio = { id: number; file_path: string; created_at: string };
-type Emotion = { audio_id: number };
+import type { Audio, AnalysisResult } from "../types";
 
 interface JobInfo {
   jobId: string;
@@ -2444,32 +2639,35 @@ interface JobInfo {
 
 const AudioHistory: React.FC = () => {
   const [audios, setAudios] = useState<Audio[]>([]);
-  const [emotions, setEmotions] = useState<Emotion[]>([]);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [jobs, setJobs] = useState<Record<number, JobInfo>>({});
   const polling = useRef<Record<string, NodeJS.Timer>>({});
 
-  // Fetch inicial de audios y emociones
+  // 🔄 Refrescar audios y resultados
+  const refreshAll = async () => {
+    setLoading(true);
+    try {
+      const [ar, rr] = await Promise.all([
+        api.get<Audio[]>("/audios"),
+        api.get<AnalysisResult[]>("/analyze/results/all"),
+      ]);
+      setAudios(ar.data);
+      setResults(rr.data);
+    } catch (e) {
+      console.error("Error al refrescar datos:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch inicial
   useEffect(() => {
-    (async () => {
-      try {
-        const [ar, er] = await Promise.all([
-          api.get<Audio[]>("/audios"),
-          api.get<Emotion[]>("/analyze/emotions"),
-        ]);
-        setAudios(ar.data);
-        setEmotions(er.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    refreshAll();
   }, []);
 
-  const isAnalyzed = (id: number) => emotions.some((e) => e.audio_id === id);
+  const isAnalyzed = (id: number) => results.some((r) => r.audio_id === id);
 
-  // Iniciar job y arrancar polling
   const handleAnalyze = async (audio: Audio) => {
     setLoading(true);
     try {
@@ -2485,6 +2683,7 @@ const AudioHistory: React.FC = () => {
           progress: number;
           audio_id: number;
         }>("/analyze/status", { params: { job_id: jobId } });
+
         setJobs((j) => ({
           ...j,
           [audio.id]: { jobId, progress: st.data.progress },
@@ -2494,8 +2693,7 @@ const AudioHistory: React.FC = () => {
           clearInterval(polling.current[jobId]);
           delete polling.current[jobId];
 
-          const emoRes = await api.get<Emotion[]>("/analyze/emotions");
-          setEmotions(emoRes.data);
+          await refreshAll();
 
           setJobs((j) => {
             const c = { ...j };
@@ -2515,7 +2713,11 @@ const AudioHistory: React.FC = () => {
 
   return (
     <Container style={{ marginTop: "2rem" }}>
-      <h2>🎧 Audios no analizados</h2>
+      <h2>📁 Historial de audios</h2>
+      <Button variant="secondary" onClick={refreshAll} className="mb-3">
+        🔄 Recargar audios y resultados
+      </Button>
+
       {loading ? (
         <Spinner />
       ) : (
@@ -2525,65 +2727,42 @@ const AudioHistory: React.FC = () => {
               <th>ID</th>
               <th>Archivo</th>
               <th>Fecha</th>
+              <th>Estado</th>
               <th>Acción/Progreso</th>
             </tr>
           </thead>
           <tbody>
-            {audios
-              .filter((a) => !isAnalyzed(a.id))
-              .map((a) => {
-                const job = jobs[a.id];
-                return (
-                  <tr key={a.id}>
-                    <td>{a.id}</td>
-                    <td>{a.file_path.split("\\").pop()}</td>
-                    <td>{new Date(a.created_at).toLocaleString()}</td>
-                    <td style={{ minWidth: 200 }}>
-                      {!job ? (
-                        <Button
-                          variant="success"
-                          onClick={() => handleAnalyze(a)}
-                          disabled={loading}
-                        >
-                          Analizar
-                        </Button>
-                      ) : (
-                        <ProgressBar
-                          animated
-                          now={job.progress}
-                          label={`${job.progress}%`}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-          </tbody>
-        </Table>
-      )}
-
-      <h2 className="mt-5">📊 Audios analizados</h2>
-      {loading ? (
-        <Spinner />
-      ) : (
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Archivo</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {audios
-              .filter((a) => isAnalyzed(a.id))
-              .map((a) => (
+            {audios.map((a) => {
+              const job = jobs[a.id];
+              const analyzed = isAnalyzed(a.id);
+              return (
                 <tr key={a.id}>
                   <td>{a.id}</td>
-                  <td>{a.file_path.split("\\").pop()}</td>
+                  <td>{a.file_path.split("/").pop()}</td>
                   <td>{new Date(a.created_at).toLocaleString()}</td>
+                  <td>{analyzed ? "✅ Analizado" : "⏳ Pendiente"}</td>
+                  <td style={{ minWidth: 200 }}>
+                    {analyzed ? (
+                      "✔️"
+                    ) : !job ? (
+                      <Button
+                        variant="success"
+                        onClick={() => handleAnalyze(a)}
+                        disabled={loading}
+                      >
+                        Analizar
+                      </Button>
+                    ) : (
+                      <ProgressBar
+                        animated
+                        now={job.progress}
+                        label={`${job.progress}%`}
+                      />
+                    )}
+                  </td>
                 </tr>
-              ))}
+              );
+            })}
           </tbody>
         </Table>
       )}
@@ -3011,7 +3190,13 @@ const UploadMultipleAudios: React.FC = () => {
       const response = await axios.post("/audios/bulk", formData);
 
       setMessage("✅ Todos los archivos se subieron correctamente.");
-      setResults(response.data.files || []);
+      setResults(
+        response.data.map((audio: any) => ({
+          filename: audio.file_path.split("/").pop(),
+          content_type: "audio",
+          size: 0, // opcional si quieres mostrar algo
+        }))
+      );
       setFiles([]);
     } catch (error: any) {
       console.error("Error al subir archivos:", error);

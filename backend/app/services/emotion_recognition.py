@@ -1,4 +1,3 @@
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\emotion_recognition.py
 # emotion_recognition.py
 # backend/app/services/emotion_recognition.py
 
@@ -8,6 +7,9 @@ from app.core.config import settings
 from pathlib import Path
 import soundfile as sf
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Diccionario de mapeo de etiquetas
 label_map = {
@@ -33,7 +35,8 @@ try:
         model=settings.HUGGINGFACE_MODEL,
         top_k=5
     )
-except Exception:
+except Exception as e:
+    logger.error(f"❌ Error cargando modelo HuggingFace: {e}")
     emotion_pipeline = None
 
 
@@ -53,13 +56,23 @@ def recognize_emotions(file_path: str) -> List[Dict]:
 
     # Leer señal de audio
     data, sr = sf.read(str(p))
+    if data.size == 0:
+        raise ValueError(f"⚠️ Audio vacío: {p}")
+
     # Convertir a mono si es necesario
     if data.ndim > 1:
         data = np.mean(data, axis=1)
 
+    # Normalizar señal
+    data = data / np.max(np.abs(data)) if np.max(np.abs(data)) > 0 else data
+
     # Clasificación cruda
-    raw_results = emotion_pipeline(data, sampling_rate=sr)
-    print("🔍 Resultados del modelo:", raw_results)
+    try:
+        raw_results = emotion_pipeline(data, sampling_rate=sr)
+        logger.info(f"🔍 Resultados del modelo para {p.name}: {raw_results}")
+    except Exception as e:
+        logger.error(f"❌ Error en clasificación de audio {p.name}: {e}")
+        return []
 
     # Mapear labels legibles
     mapped = [

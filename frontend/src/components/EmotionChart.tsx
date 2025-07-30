@@ -93,6 +93,9 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
     maintainAspectRatio: false,
   };
 
+  // 🎯 Emociones únicas detectadas en este análisis
+  const detectedLabels = new Set(valid.map((e) => e.label));
+
   return (
     <section>
       <h2>🎭 Emociones detectadas en el audio #{audioId}</h2>
@@ -110,11 +113,11 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
           <Bar data={data} options={options} />
         </div>
 
-        {/* Leyenda a la derecha */}
+        {/* Leyenda solo de emociones detectadas */}
         <aside style={{ minWidth: "160px" }}>
           <h3>🎨 Leyenda</h3>
           <ul style={{ listStyle: "none", padding: 0 }}>
-            {Object.entries(emotionColors).map(([label, color]) => (
+            {[...detectedLabels].map((label) => (
               <li
                 key={label}
                 style={{
@@ -128,7 +131,7 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
                     display: "inline-block",
                     width: 16,
                     height: 16,
-                    backgroundColor: color,
+                    backgroundColor: emotionColors[label] || "#ccc",
                     borderRadius: 4,
                     marginRight: 8,
                   }}
