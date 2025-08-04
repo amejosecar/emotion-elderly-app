@@ -3,6 +3,7 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import EmotionDistributionChart from "../components/Dashboard/EmotionDistributionChart";
+import SummaryCharts from "../components/SummaryCharts";
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -39,12 +40,15 @@ const Dashboard: React.FC = () => {
       {/* 📊 Gráfico de distribución de emociones */}
       <EmotionDistributionChart />
 
+      {/* 📈 Gráficos de frecuencia y criticidad global * <SummaryCharts />/}
+      
+
       {/* 🔓 Logout */}
-      <div className="mt-4">
+      {/*       <div className="mt-4">
         <button type="button" className="btn btn-danger" onClick={logout}>
           Cerrar sesión
         </button>
-      </div>
+      </div> */}
     </main>
   );
 };

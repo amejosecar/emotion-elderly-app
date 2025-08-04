@@ -27,63 +27,65 @@ ChartJS.register(
   Legend
 );
 
-interface Emotion {
-  label: string;
-  confidence: number;
-}
-
-interface AnalysisResult {
-  audio_id: number;
-  emotions: Emotion[];
-}
-
-const emotionColors: Record<string, string> = {
-  Tristeza: "#5DADE2",
-  Alegría: "#FFD700",
-  Miedo: "#4B0082",
-  Enojo: "#E63946",
-  Desagrado: "#9ACD32",
-  Sorpresa: "#FFA500",
-  Neutral: "#95A5A6",
-  Confianza: "#008080",
-  Vergüenza: "#8E44AD",
-  Culpa: "#8B4513",
-  Amor: "#E91E63",
-  Orgullo: "#FFB400",
-  Interés: "#1ABC9C",
-  Calma: "#AED6F1",
-  Confusión: "#7F8C8D",
-  Ansiedad: "#34495E",
+// Pesos para calcular criticidad
+const WEIGHTS: Record<string, number> = {
+  Confusión: 3,
+  Miedo: 3,
+  Tristeza: 3,
+  Enojo: 2,
+  Alegría: 1,
+  Serenidad: 1,
 };
 
+// Colores base para emociones
+const emotionColors: string[] = [
+  "#E63946",
+  "#F4A261",
+  "#2A9D8F",
+  "#E9C46A",
+  "#457B9D",
+  "#1D3557",
+  "#A8DADC",
+  "#FFB703",
+  "#5DADE2",
+  "#8E44AD",
+  "#34495E",
+  "#E91E63",
+];
+
 const EmotionDistributionChart: React.FC = () => {
-  const [emotionCounts, setEmotionCounts] = useState<Record<string, number>>(
-    {}
-  );
+  const [labels, setLabels] = useState<string[]>([]);
+  const [critPerc, setCritPerc] = useState<number[]>([]);
   const [chartType, setChartType] = useState<
     "bar" | "pie" | "doughnut" | "radar"
-  >("bar");
+  >("radar");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await api.get<AnalysisResult[]>("/analyze/results/all");
-        const allEmotions: string[] = [];
+        const res = await api.get("/analyze/results/all");
+        const allEmotions = res.data.flatMap((r: any) =>
+          r.emotions.map((e: any) => e.label)
+        );
 
-        res.data.forEach((result) => {
-          result.emotions.forEach((emotion) => {
-            if (emotion.label) {
-              allEmotions.push(emotion.label);
-            }
-          });
+        // Frecuencia
+        const freqMap: Record<string, number> = {};
+        allEmotions.forEach((lab: string) => {
+          freqMap[lab] = (freqMap[lab] || 0) + 1;
         });
+        const emotionLabels = Object.keys(freqMap);
 
-        const countMap: Record<string, number> = {};
-        allEmotions.forEach((label) => {
-          countMap[label] = (countMap[label] || 0) + 1;
-        });
+        // Criticidad
+        const impacts = emotionLabels.map(
+          (lab) => (freqMap[lab] || 0) * (WEIGHTS[lab] || 1)
+        );
+        const totalImpact = impacts.reduce((a, b) => a + b, 0);
+        const critPercents = impacts.map((imp) =>
+          totalImpact ? parseFloat(((imp / totalImpact) * 100).toFixed(2)) : 0
+        );
 
-        setEmotionCounts(countMap);
+        setLabels(emotionLabels);
+        setCritPerc(critPercents);
       } catch (err) {
         console.error("Error al obtener emociones:", err);
       }
@@ -92,29 +94,41 @@ const EmotionDistributionChart: React.FC = () => {
     fetchData();
   }, []);
 
-  const total = Object.values(emotionCounts).reduce((acc, val) => acc + val, 0);
-
   const data = {
-    labels: Object.keys(emotionCounts),
+    labels,
     datasets: [
       {
-        label: "Distribución de emociones (%)",
-        data: Object.values(emotionCounts).map((count) =>
-          parseFloat(((count / total) * 100).toFixed(2))
-        ),
-        backgroundColor: Object.keys(emotionCounts).map(
-          (label) => emotionColors[label] || "#ccc"
-        ),
-        borderColor: "#fff",
-        borderWidth: 1,
+        label: "Criticidad (%)",
+        data: critPerc,
+        backgroundColor:
+          chartType === "radar"
+            ? "rgba(255, 183, 3, 0.3)"
+            : emotionColors.slice(0, labels.length),
+        borderColor: chartType === "radar" ? "rgba(255, 183, 3, 0.8)" : "#fff",
+        pointBackgroundColor: "rgba(255, 183, 3, 1)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+        pointHoverBorderColor: "rgba(255, 183, 3, 1)",
+        borderWidth: 2,
+        tension: 0.4,
       },
     ],
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
-      legend: { display: chartType !== "bar" },
+      legend: {
+        display: chartType !== "bar",
+        position: "top",
+        labels: {
+          color: "#333",
+          font: {
+            size: 14,
+          },
+        },
+      },
       tooltip: {
         callbacks: {
           label: (ctx: any) => `${ctx.parsed || ctx.raw}%`,
@@ -122,11 +136,39 @@ const EmotionDistributionChart: React.FC = () => {
       },
     },
     scales:
-      chartType === "bar"
+      chartType === "radar"
+        ? {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (value: number) => `${value}%`,
+                stepSize: 20,
+                color: "#666",
+                font: {
+                  size: 12,
+                },
+              },
+              grid: {
+                color: "rgba(0,0,0,0.1)",
+              },
+              angleLines: {
+                color: "rgba(0,0,0,0.2)",
+              },
+              pointLabels: {
+                color: "#444",
+                font: {
+                  size: 13,
+                  weight: "bold",
+                },
+              },
+            },
+          }
+        : chartType === "bar"
         ? {
             y: {
               beginAtZero: true,
-              title: { display: true, text: "Porcentaje (%)" },
+              title: { display: true, text: "Criticidad (%)" },
             },
             x: {
               title: { display: true, text: "Emociones" },
@@ -136,21 +178,44 @@ const EmotionDistributionChart: React.FC = () => {
   };
 
   const renderChart = () => {
+    const chartStyle = {
+      height: "400px",
+      width: "100%",
+      maxWidth: "700px",
+      margin: "0 auto",
+    };
+
     switch (chartType) {
       case "pie":
-        return <Pie data={data} options={options} />;
+        return (
+          <div style={chartStyle}>
+            <Pie data={data} options={options} />
+          </div>
+        );
       case "doughnut":
-        return <Doughnut data={data} options={options} />;
+        return (
+          <div style={chartStyle}>
+            <Doughnut data={data} options={options} />
+          </div>
+        );
       case "radar":
-        return <Radar data={data} options={options} />;
+        return (
+          <div style={chartStyle}>
+            <Radar data={data} options={options} />
+          </div>
+        );
       default:
-        return <Bar data={data} options={options} />;
+        return (
+          <div style={chartStyle}>
+            <Bar data={data} options={options} />
+          </div>
+        );
     }
   };
 
   return (
-    <div style={{ maxWidth: "100%", marginTop: "2rem" }}>
-      <h4>📊 Distribución de emociones detectadas</h4>
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <h4>📊 Distribución de criticidad emocional</h4>
       <div style={{ marginBottom: "1rem" }}>
         <button onClick={() => setChartType("bar")}>Gráfico de Barras</button>
         <button onClick={() => setChartType("pie")}>Gráfico de Pie</button>

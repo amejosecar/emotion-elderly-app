@@ -1,11 +1,5 @@
-Creado el 2025-07-30 14:25:38
+Creado el 2025-08-04 12:05:30
 
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\.gitignore
-__pycache__
-.venv
-*.keras
-sonido/
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\.env
 # backend/.env
@@ -433,6 +427,118 @@ def list_alerts(
 ):
     alerts = db.query(Alert).filter(Alert.user_id == current_user.id).all()
     return AlertList(alerts=alerts)
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze copy.py
+# backend/app/api/routers/analyze.py
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+import logging
+from pathlib import Path
+from typing import List
+
+from app.api.dependencies import get_db
+from app.core.security import get_current_user
+from app.models import User, Audio, Alert, Emotion
+from app.schemas.emotion import AnalysisResult, EmotionRead
+from app.schemas.alert import AlertRead
+from app.services.emotion_recognition import recognize_emotions
+from app.core.config import settings
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+#ALERT_THRESHOLD = 0.8
+# ALERT_THRESHOLD ahora viene de .env
+ALERT_THRESHOLD = settings.ALERT_THRESHOLD
+
+
+# 🔍 Obtener resultados de análisis de un audio
+@router.get("/", response_model=AnalysisResult, summary="Obtener resultados de análisis")
+def get_analysis(
+    audio_id: int = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    audio = db.query(Audio).filter(Audio.id == audio_id, Audio.user_id == current_user.id).first()
+    if not audio:
+        raise HTTPException(status_code=404, detail="Audio no encontrado")
+
+    emotions = db.query(Emotion).filter(Emotion.audio_id == audio.id).all()
+    emotion_ids = [e.id for e in emotions]
+    alerts = db.query(Alert).filter(Alert.emotion_id.in_(emotion_ids)).all()
+
+    return AnalysisResult(
+        audio_id=audio.id,
+        emotions=emotions,
+        alerts=alerts
+    )
+
+# 🔁 Ejecutar análisis sobre un audio
+@router.post("/", response_model=AnalysisResult, summary="Analizar emociones")
+def analyze_audio(
+    audio_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    audio = db.query(Audio).filter(Audio.id == audio_id, Audio.user_id == current_user.id).first()
+    if not audio:
+        raise HTTPException(status_code=404, detail="Audio no encontrado")
+
+    path = Path(audio.file_path).expanduser().resolve()
+    logger.info(f"📥 Analizando audio en: {path}")
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"Audio no existe: {path}")
+
+    try:
+        results = recognize_emotions(str(path))
+        logger.info(f"🔍 Resultados del modelo: {results}")
+    except FileNotFoundError as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        logger.error(str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except Exception:
+        logger.exception("Error interno al analizar emociones")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo al analizar emociones")
+
+    saved_emotions, generated_alerts = [], []
+    for r in results:
+        emo = Emotion(audio_id=audio.id, label=r["label"], confidence=r["score"])
+        db.add(emo)
+        db.commit()
+        db.refresh(emo)
+        saved_emotions.append(emo)
+        logger.info(f"✅ Emoción guardada: {emo.label} ({emo.confidence:.2f})")
+
+        if r["score"] >= ALERT_THRESHOLD:
+            msg = f"Detected {r['label']} with confidence {r['score']:.2f}"
+            al = Alert(user_id=current_user.id, emotion_id=emo.id, message=msg)
+            db.add(al)
+            db.commit()
+            db.refresh(al)
+            generated_alerts.append(al)
+            logger.info(f"🚨 Alerta generada: {msg}")
+
+    return AnalysisResult(
+        audio_id=audio.id,
+        emotions=saved_emotions,
+        alerts=generated_alerts
+    )
+
+# 🆕 Listar todas las emociones del usuario
+@router.get("/emotions", response_model=List[EmotionRead], summary="Listar emociones por usuario")
+def list_user_emotions(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    emotions = (
+        db.query(Emotion)
+        .join(Audio)
+        .filter(Audio.user_id == current_user.id)
+        .all()
+    )
+    return emotions
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\api\routers\analyze.py
@@ -1021,19 +1127,6 @@ engine = create_engine(settings.DATABASE_URL, connect_args={"check_same_thread":
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 ----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\__init__.py
-# app/models/__init__.py
-
-from app.models.user import User
-from app.models.audio import Audio
-from app.models.emotion import Emotion
-from app.models.alert import Alert
-from app.models.role import Role
-
-__all__ = ["User", "Audio", "Emotion", "Alert", "Role"]
-
-# app/models/__init__.py
-----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\alert.py
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\alert.py
 # alert.py
@@ -1141,6 +1234,19 @@ class User(Base):
     )
 
 ----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\models\__init__.py
+# app/models/__init__.py
+
+from app.models.user import User
+from app.models.audio import Audio
+from app.models.emotion import Emotion
+from app.models.alert import Alert
+from app.models.role import Role
+
+__all__ = ["User", "Audio", "Emotion", "Alert", "Role"]
+
+# app/models/__init__.py
+----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\alert.py
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\schemas\alert.py
 # alert.py
@@ -1238,6 +1344,71 @@ class UserRead(BaseModel):
 
     class Config:
         orm_mode = True
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\audio_processing.py
+# backend/app/services/audio_processing.py
+import logging
+from typing import List, Dict
+
+from app.services.emotion_recognition import recognize_emotions
+from app.db.session import SessionLocal
+from app.models import Emotion, Alert
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+def process_audio(
+    audio_id: int,
+    file_path: str,
+    user_id: int
+):
+    """
+    Tarea en background:
+      1) Ejecuta recognize_emotions().
+      2) Persiste emociones.
+      3) Genera alertas si confidence >= ALERT_THRESHOLD.
+    """
+    db = SessionLocal()
+    try:
+        logger.info(f"▶️ Procesando audio #{audio_id} en background")
+
+        results: List[Dict] = recognize_emotions(file_path)
+
+        if not results:
+            logger.warning(f"⚠️ No se detectaron emociones en audio #{audio_id}")
+            return
+
+        with db.begin():  # ✅ agrupa transacciones
+            for r in results:
+                try:
+                    emo = Emotion(
+                        audio_id=audio_id,
+                        label=r["label"],
+                        confidence=r["score"]
+                    )
+                    db.add(emo)
+                    db.flush()  # ✅ obtiene emo.id sin commit
+
+                    if r["score"] >= settings.ALERT_THRESHOLD:
+                        msg = f"Detected {r['label']} ({r['score']:.2f})"
+                        al = Alert(
+                            user_id=user_id,
+                            emotion_id=emo.id,
+                            message=msg
+                        )
+                        db.add(al)
+                        logger.info(f"🚨 Alerta para audio {audio_id}: {msg}")
+
+                except Exception as e:
+                    logger.error(f"❌ Error procesando emoción {r}: {e}")
+
+        logger.info(f"✅ Procesamiento completo para audio #{audio_id}")
+
+    except Exception as e:
+        logger.exception(f"❌ Error general procesando audio #{audio_id}: {e}")
+    finally:
+        db.close()
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\audio_service.py
@@ -1346,6 +1517,9 @@ def recognize_emotions(file_path: str) -> List[Dict]:
     return deduped
 
 ----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\services\__init__.py
+
+----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\templates\index.html
 <!DOCTYPE html>
 <html lang="es">
@@ -1359,9 +1533,6 @@ def recognize_emotions(file_path: str) -> List[Dict]:
     <p>Usuario: {{ user.username if user else "Invitado" }}</p>
   </body>
 </html>
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\templates\static\00.py
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\backend\app\utils\date_utils.py
@@ -1591,6 +1762,33 @@ export default tseslint.config([
   },
   "include": ["vite.config.ts"]
 }
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\vite.config.ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+
+  // Preempaqueta jwt-decode como ESM para que exponga default()
+  optimizeDeps: {
+    include: ["jwt-decode"],
+  },
+
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
+
+  server: {
+    host: true,
+    port: 5173,
+    open: true,
+  },
+});
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\public\index.html
@@ -1941,6 +2139,196 @@ const EmotionChart: React.FC<Props> = ({ emotions, audioId }) => {
 export default EmotionChart;
 
 ----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\SummaryCharts.tsx
+//C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\SummaryCharts.tsx
+
+import React, { useEffect, useState } from "react";
+import { Bar, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import api from "../api/axios";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Tooltip,
+  Legend
+);
+
+// Pesos para calcular criticidad
+const WEIGHTS: Record<string, number> = {
+  Confusión: 3,
+  Miedo: 3,
+  Tristeza: 3,
+  Enojo: 2,
+  Alegría: 1,
+  Serenidad: 1,
+};
+
+const SummaryCharts: React.FC = () => {
+  const [labels, setLabels] = useState<string[]>([]);
+  const [freqData, setFreqData] = useState<number[]>([]);
+  const [critPerc, setCritPerc] = useState<number[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get("/analyze/results/all");
+        const allEmotions = res.data.flatMap((r: any) =>
+          r.emotions.map((e: any) => e.label)
+        );
+
+        // Frecuencia
+        const freqMap: Record<string, number> = {};
+        allEmotions.forEach((lab: string) => {
+          freqMap[lab] = (freqMap[lab] || 0) + 1;
+        });
+        const emotionLabels = Object.keys(freqMap);
+
+        // Criticidad
+        const impacts = emotionLabels.map(
+          (lab) => (freqMap[lab] || 0) * (WEIGHTS[lab] || 1)
+        );
+        const totalImpact = impacts.reduce((a, b) => a + b, 0);
+        const critPercents = impacts.map((imp) =>
+          totalImpact ? parseFloat(((imp / totalImpact) * 100).toFixed(2)) : 0
+        );
+
+        setLabels(emotionLabels);
+        setFreqData(emotionLabels.map((lab) => freqMap[lab]));
+        setCritPerc(critPercents);
+      } catch (error) {
+        console.error("Error al cargar los datos:", error);
+      }
+    })();
+  }, []);
+
+  // 🎯 Gráfico de barras con frecuencia y criticidad
+  const barData = {
+    labels,
+    datasets: [
+      {
+        label: "Frecuencia",
+        data: freqData,
+        backgroundColor: "rgba(90, 93, 255, 0.7)",
+      },
+      {
+        label: "Criticidad (%)",
+        data: critPerc,
+        backgroundColor: "rgba(255, 183, 3, 0.7)",
+      },
+    ],
+  };
+
+  // 🥧 Gráfico circular de criticidad
+  const pieData = {
+    labels,
+    datasets: [
+      {
+        data: critPerc,
+        backgroundColor: [
+          "#E63946",
+          "#F4A261",
+          "#2A9D8F",
+          "#E9C46A",
+          "#457B9D",
+          "#1D3557",
+          "#A8DADC",
+          "#FFB703",
+        ].slice(0, labels.length),
+      },
+    ],
+  };
+
+  return (
+    <section>
+      <h2>📊 Resumen Global de Emociones</h2>
+      <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 300, height: 300 }}>
+          <Bar
+            data={barData}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "top",
+                },
+              },
+            }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 300, height: 300 }}>
+          <Pie
+            data={pieData}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "right",
+                },
+              },
+            }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default SummaryCharts;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\ErrorBoundary.tsx
+import React from "react";
+
+type Props = {
+  children: React.ReactNode;
+};
+
+type State = {
+  hasError: boolean;
+};
+
+class ErrorBoundary extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error): State {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("🛑 Error capturado por ErrorBoundary:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main style={{ padding: "2rem", textAlign: "center" }}>
+          <h1>😢 Algo salió mal</h1>
+          <p>Intenta recargar la página o volver más tarde.</p>
+        </main>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+
+----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\PrivateRoute.tsx
 // src/components/PrivateRoute.tsx
 import { Navigate, Outlet } from "react-router-dom";
@@ -1958,6 +2346,241 @@ export default PrivateRoute;
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\common\.gitkeep
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\common\.gitkeep
 # .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\Dashboard\EmotionDistributionChart.tsx
+//frontend/src/components/Dashboard/EmotionDistributionChart.tsx
+import React, { useEffect, useState } from "react";
+import { Bar, Pie, Doughnut, Radar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import api from "../../api/axios";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  RadialLinearScale,
+  ArcElement,
+  Tooltip,
+  Legend
+);
+
+// Pesos para calcular criticidad
+const WEIGHTS: Record<string, number> = {
+  Confusión: 3,
+  Miedo: 3,
+  Tristeza: 3,
+  Enojo: 2,
+  Alegría: 1,
+  Serenidad: 1,
+};
+
+// Colores base para emociones
+const emotionColors: string[] = [
+  "#E63946",
+  "#F4A261",
+  "#2A9D8F",
+  "#E9C46A",
+  "#457B9D",
+  "#1D3557",
+  "#A8DADC",
+  "#FFB703",
+  "#5DADE2",
+  "#8E44AD",
+  "#34495E",
+  "#E91E63",
+];
+
+const EmotionDistributionChart: React.FC = () => {
+  const [labels, setLabels] = useState<string[]>([]);
+  const [critPerc, setCritPerc] = useState<number[]>([]);
+  const [chartType, setChartType] = useState<
+    "bar" | "pie" | "doughnut" | "radar"
+  >("radar");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get("/analyze/results/all");
+        const allEmotions = res.data.flatMap((r: any) =>
+          r.emotions.map((e: any) => e.label)
+        );
+
+        // Frecuencia
+        const freqMap: Record<string, number> = {};
+        allEmotions.forEach((lab: string) => {
+          freqMap[lab] = (freqMap[lab] || 0) + 1;
+        });
+        const emotionLabels = Object.keys(freqMap);
+
+        // Criticidad
+        const impacts = emotionLabels.map(
+          (lab) => (freqMap[lab] || 0) * (WEIGHTS[lab] || 1)
+        );
+        const totalImpact = impacts.reduce((a, b) => a + b, 0);
+        const critPercents = impacts.map((imp) =>
+          totalImpact ? parseFloat(((imp / totalImpact) * 100).toFixed(2)) : 0
+        );
+
+        setLabels(emotionLabels);
+        setCritPerc(critPercents);
+      } catch (err) {
+        console.error("Error al obtener emociones:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Criticidad (%)",
+        data: critPerc,
+        backgroundColor:
+          chartType === "radar"
+            ? "rgba(255, 183, 3, 0.3)"
+            : emotionColors.slice(0, labels.length),
+        borderColor: chartType === "radar" ? "rgba(255, 183, 3, 0.8)" : "#fff",
+        pointBackgroundColor: "rgba(255, 183, 3, 1)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+        pointHoverBorderColor: "rgba(255, 183, 3, 1)",
+        borderWidth: 2,
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: chartType !== "bar",
+        position: "top",
+        labels: {
+          color: "#333",
+          font: {
+            size: 14,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => `${ctx.parsed || ctx.raw}%`,
+        },
+      },
+    },
+    scales:
+      chartType === "radar"
+        ? {
+            r: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: (value: number) => `${value}%`,
+                stepSize: 20,
+                color: "#666",
+                font: {
+                  size: 12,
+                },
+              },
+              grid: {
+                color: "rgba(0,0,0,0.1)",
+              },
+              angleLines: {
+                color: "rgba(0,0,0,0.2)",
+              },
+              pointLabels: {
+                color: "#444",
+                font: {
+                  size: 13,
+                  weight: "bold",
+                },
+              },
+            },
+          }
+        : chartType === "bar"
+        ? {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Criticidad (%)" },
+            },
+            x: {
+              title: { display: true, text: "Emociones" },
+            },
+          }
+        : undefined,
+  };
+
+  const renderChart = () => {
+    const chartStyle = {
+      height: "400px",
+      width: "100%",
+      maxWidth: "700px",
+      margin: "0 auto",
+    };
+
+    switch (chartType) {
+      case "pie":
+        return (
+          <div style={chartStyle}>
+            <Pie data={data} options={options} />
+          </div>
+        );
+      case "doughnut":
+        return (
+          <div style={chartStyle}>
+            <Doughnut data={data} options={options} />
+          </div>
+        );
+      case "radar":
+        return (
+          <div style={chartStyle}>
+            <Radar data={data} options={options} />
+          </div>
+        );
+      default:
+        return (
+          <div style={chartStyle}>
+            <Bar data={data} options={options} />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <h4>📊 Distribución de criticidad emocional</h4>
+      <div style={{ marginBottom: "1rem" }}>
+        <button onClick={() => setChartType("bar")}>Gráfico de Barras</button>
+        <button onClick={() => setChartType("pie")}>Gráfico de Pie</button>
+        <button onClick={() => setChartType("doughnut")}>
+          Gráfico Doughnut
+        </button>
+        <button onClick={() => setChartType("radar")}>Gráfico Radar</button>
+      </div>
+      {renderChart()}
+    </div>
+  );
+};
+
+export default EmotionDistributionChart;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\layout\.gitkeep
@@ -2079,48 +2702,6 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\components\ErrorBoundary.tsx
-import React from "react";
-
-type Props = {
-  children: React.ReactNode;
-};
-
-type State = {
-  hasError: boolean;
-};
-
-class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("🛑 Error capturado por ErrorBoundary:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <main style={{ padding: "2rem", textAlign: "center" }}>
-          <h1>😢 Algo salió mal</h1>
-          <p>Intenta recargar la página o volver más tarde.</p>
-        </main>
-      );
-    }
-
-    return this.props.children;
-  }
-}
-
-export default ErrorBoundary;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\contexts\.gitkeep
@@ -2533,6 +3114,105 @@ const Alerts: React.FC = () => {
 export default Alerts;
 
 ----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze copy.tsx
+//C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
+//Analyze.tsx
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import api from "../api/axios";
+import EmotionChart from "../components/EmotionChart";
+import "../styles/spinner.css";
+import "../styles/progress.css";
+
+type Emotion = {
+  id: number;
+  label: string;
+  confidence: number;
+  timestamp: string;
+};
+
+type Alert = {
+  id: number;
+  message: string;
+  created_at: string;
+};
+
+const Analyze: React.FC = () => {
+  const { audioId } = useParams();
+  const [result, setResult] = useState<{
+    emotions: Emotion[];
+    alerts: Alert[];
+  } | null>(null);
+  const [status, setStatus] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [progress, setProgress] = useState<number>(0);
+
+  useEffect(() => {
+    setLoading(true);
+    setProgress(0);
+
+    const interval = setInterval(() => {
+      setProgress((prev) => (prev < 90 ? prev + 10 : prev));
+    }, 200);
+
+    api
+      .get(`/analyze/?audio_id=${audioId}`)
+      .then((res) => {
+        setResult({ emotions: res.data.emotions, alerts: res.data.alerts });
+        setLoading(false);
+        setProgress(100);
+        clearInterval(interval);
+      })
+      .catch(() => {
+        setStatus("❌ Error al obtener análisis");
+        setLoading(false);
+        clearInterval(interval);
+      });
+
+    return () => clearInterval(interval);
+  }, [audioId]);
+
+  return (
+    <main>
+      <h1>Resultados del Análisis</h1>
+      {status && <p>{status}</p>}
+
+      {loading ? (
+        <div style={{ textAlign: "center", marginTop: "2rem" }}>
+          <div className="spinner" style={{ marginBottom: "1rem" }} />
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <p>⏳ Procesando análisis, por favor espera…</p>
+        </div>
+      ) : result ? (
+        <>
+          <EmotionChart emotions={result.emotions} audioId={Number(audioId)} />
+
+          <h2 style={{ marginTop: "2rem" }}>🚨 Alertas</h2>
+          {result.alerts.length > 0 ? (
+            <ul>
+              {result.alerts.map((a) => (
+                <li key={a.id}>
+                  {a.message}{" "}
+                  <em>({new Date(a.created_at).toLocaleString()})</em>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Sin alertas generadas.</p>
+          )}
+        </>
+      ) : (
+        <p>No hay resultados disponibles.</p>
+      )}
+    </main>
+  );
+};
+
+export default Analyze;
+
+----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
 //C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Analyze.tsx
 //Analyze.tsx
@@ -2617,6 +3297,184 @@ const Analyze: React.FC = () => {
 };
 
 export default Analyze;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory copy.tsx
+// # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
+// # AudioHistory.tsx
+import React, { useEffect, useState, useRef } from "react";
+import api from "../api/axios";
+import Table from "react-bootstrap/Table";
+import Button from "react-bootstrap/Button";
+import Container from "react-bootstrap/Container";
+import Spinner from "react-bootstrap/Spinner";
+import ProgressBar from "react-bootstrap/ProgressBar";
+import type { Audio, AnalysisResult } from "../types";
+
+interface JobInfo {
+  jobId: string;
+  progress: number;
+}
+
+const AudioHistory: React.FC = () => {
+  const [audios, setAudios] = useState<Audio[]>([]);
+  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState<Record<number, JobInfo>>({});
+  const polling = useRef<Record<string, NodeJS.Timer>>({});
+
+  // 🔄 Refrescar resultados desde el backend
+  const refreshResults = async () => {
+    try {
+      const rr = await api.get<AnalysisResult[]>("/analyze/results/all");
+      setResults(rr.data);
+    } catch (e) {
+      console.error("Error al refrescar resultados:", e);
+    }
+  };
+
+  // Fetch inicial de audios y resultados
+  useEffect(() => {
+    (async () => {
+      try {
+        const [ar, rr] = await Promise.all([
+          api.get<Audio[]>("/audios"),
+          api.get<AnalysisResult[]>("/analyze/results/all"),
+        ]);
+        setAudios(ar.data);
+        setResults(rr.data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const isAnalyzed = (id: number) => results.some((r) => r.audio_id === id);
+
+  // Iniciar job y arrancar polling
+  const handleAnalyze = async (audio: Audio) => {
+    setLoading(true);
+    try {
+      const res = await api.post<{ job_id: string }>("/analyze/start", null, {
+        params: { audio_id: audio.id },
+      });
+      const jobId = res.data.job_id;
+      setJobs((j) => ({ ...j, [audio.id]: { jobId, progress: 0 } }));
+
+      const timer = setInterval(async () => {
+        const st = await api.get<{
+          status: string;
+          progress: number;
+          audio_id: number;
+        }>("/analyze/status", { params: { job_id: jobId } });
+        setJobs((j) => ({
+          ...j,
+          [audio.id]: { jobId, progress: st.data.progress },
+        }));
+
+        if (st.data.status === "done" || st.data.status === "error") {
+          clearInterval(polling.current[jobId]);
+          delete polling.current[jobId];
+
+          await refreshResults();
+
+          setJobs((j) => {
+            const c = { ...j };
+            delete c[audio.id];
+            return c;
+          });
+        }
+      }, 500);
+
+      polling.current[jobId] = timer;
+    } catch (err) {
+      console.error("Error iniciando job:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Container style={{ marginTop: "2rem" }}>
+      <h2>🎧 Audios no analizados</h2>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Archivo</th>
+              <th>Fecha</th>
+              <th>Acción/Progreso</th>
+            </tr>
+          </thead>
+          <tbody>
+            {audios
+              .filter((a) => !isAnalyzed(a.id))
+              .map((a) => {
+                const job = jobs[a.id];
+                return (
+                  <tr key={a.id}>
+                    <td>{a.id}</td>
+                    <td>{a.file_path.split("/").pop()}</td>
+                    <td>{new Date(a.created_at).toLocaleString()}</td>
+                    <td style={{ minWidth: 200 }}>
+                      {!job ? (
+                        <Button
+                          variant="success"
+                          onClick={() => handleAnalyze(a)}
+                          disabled={loading}
+                        >
+                          Analizar
+                        </Button>
+                      ) : (
+                        <ProgressBar
+                          animated
+                          now={job.progress}
+                          label={`${job.progress}%`}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </Table>
+      )}
+
+      <h2 className="mt-5">📊 Audios analizados</h2>
+      {loading ? (
+        <Spinner />
+      ) : (
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Archivo</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody>
+            {audios
+              .filter((a) => isAnalyzed(a.id))
+              .map((a) => (
+                <tr key={a.id}>
+                  <td>{a.id}</td>
+                  <td>{a.file_path.split("/").pop()}</td>
+                  <td>{new Date(a.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+          </tbody>
+        </Table>
+      )}
+    </Container>
+  );
+};
+
+export default AudioHistory;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\AudioHistory.tsx
@@ -2858,6 +3716,8 @@ export default Auth;
 
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
+import EmotionDistributionChart from "../components/Dashboard/EmotionDistributionChart";
+import SummaryCharts from "../components/SummaryCharts";
 
 const Dashboard: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -2884,19 +3744,25 @@ const Dashboard: React.FC = () => {
 
   // Usuario autenticado y cargado correctamente
   return (
-    <main>
+    <main className="container py-4">
       <h1>Panel de Control</h1>
       <p>
         Bienvenido <strong>{user.email}</strong>, aquí tienes el resumen de
         actividad y análisis recientes.
       </p>
 
-      {/* Aquí puedes agregar tu componente o lógica para mostrar datos/emociones */}
-      {/* por ejemplo: <ActivitySummary data={activityData} /> */}
+      {/* 📊 Gráfico de distribución de emociones */}
+      <EmotionDistributionChart />
 
-      <button type="button" onClick={logout}>
-        Cerrar sesión
-      </button>
+      {/* 📈 Gráficos de frecuencia y criticidad global * <SummaryCharts />/}
+      
+
+      {/* 🔓 Logout */}
+      {/*       <div className="mt-4">
+        <button type="button" className="btn btn-danger" onClick={logout}>
+          Cerrar sesión
+        </button>
+      </div> */}
     </main>
   );
 };
@@ -2917,6 +3783,33 @@ const Home: React.FC = () => (
 );
 
 export default Home;
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Loading.tsx
+// src/pages/Loading.tsx
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+const Loading: React.FC = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate("/dashboard");
+    }, 1000); // espera 1 segundo
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
+
+  return (
+    <main style={{ textAlign: "center", marginTop: "3rem" }}>
+      <h1>🔄 Cargando tu panel…</h1>
+      <p>Estamos preparando tus datos, por favor espera.</p>
+    </main>
+  );
+};
+
+export default Loading;
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\pages\Login.tsx
@@ -3295,27 +4188,6 @@ const ProtectedRoute: React.FC<Props> = ({ children }) => {
 export default ProtectedRoute;
 
 ----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\spinner.css
-.spinner {
-  border: 6px solid #f3f3f3;
-  border-top: 6px solid #5a5dff;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\Form.css
 form {
   display: flex;
@@ -3344,6 +4216,44 @@ button:hover {
 }
 
 ----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\progress.css
+.progress-bar {
+  width: 80%;
+  height: 20px;
+  background-color: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 auto 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #5a5dff;
+  transition: width 0.3s ease;
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\spinner.css
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #5a5dff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\theme.ts
 // C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\theme.ts
 // theme.ts
@@ -3367,38 +4277,6 @@ export const theme = {
     weight: '400',
   },
 };
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\styles\progress.css
-.progress-bar {
-  width: 80%;
-  height: 20px;
-  background-color: #eee;
-  border-radius: 10px;
-  overflow: hidden;
-  margin: 0 auto 1rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: #5a5dff;
-  transition: width 0.3s ease;
-}
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
-# formatDate.ts
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
-# .gitkeep
-
-----------------------------------------
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
-# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
-# .gitkeep
 
 ----------------------------------------
 # C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\types\index.ts
@@ -3431,4 +4309,25 @@ export interface AnalysisResult {
   emotions: Emotion[];
   alerts: AlertRead[];
 }
+
+export interface AnalysisResult {
+  audio_id: number;
+  emotions: { label: string; confidence: number; timestamp: string }[];
+  alerts: unknown[];
+}
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\frontend\src\utils\formatDate.ts
+# formatDate.ts
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\integration\.gitkeep
+# .gitkeep
+
+----------------------------------------
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
+# C:\americo\ia_dema\z-proyeto_final\emotion-elderly-app\tests\unit\.gitkeep
+# .gitkeep
 

@@ -27,3 +27,9 @@ export interface AnalysisResult {
   emotions: Emotion[];
   alerts: AlertRead[];
 }
+
+export interface AnalysisResult {
+  audio_id: number;
+  emotions: { label: string; confidence: number; timestamp: string }[];
+  alerts: unknown[];
+}
