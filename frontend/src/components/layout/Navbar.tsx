@@ -17,15 +17,15 @@ const Navbar: React.FC = () => {
 
   return (
     <nav>
-      <Link to="/">Inicio</Link>
+      {/* <Link to="/">Inicio</Link> */}
 
       {isAuthenticated ? (
         <>
           <Link to="/dashboard">Dashboard</Link>
           <Link to="/audios">Audios</Link>
           <Link to="/alerts">Alertas</Link>
-          <Link to="/upload">Subir Audio</Link>
-          <Link to="/upload-multiple">Subir Múltiples Audios</Link>{" "}
+          {/* <Link to="/upload">Subir Audio</Link> */}
+          <Link to="/upload-multiple">Subir Audios</Link>{" "}
           {/* ✅ nuevo enlace */}
           {user && (
             <span style={{ marginLeft: "auto" }}>
